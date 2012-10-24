@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load markup %}
+
+{% block title %}{{ object.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ object.title }}</h1>
+
+<p><a href="{% url recipe-list %}">Back to recipe list</a></p>
+
+<h2>Ingredients</h2>
+<ul>
+{% for ingredient in object.ingredient_set.all %}
+<li>{{ ingredient}} <a href="{% url ingredient-delete object.slug ingredient.id %}"><i class="icon-remove"></i></a></li>
+{% endfor %}
+</ul>
+<p><a href="{% url ingredient-create object.slug %}">Add ingredient</a></p>
+
+<h2>Description</h2>
+<p>{{ object.description|markdown|default:"No description" }}</p>
+
+<p><a href="{% url recipe-update object.slug %}">Edit description</a></p>
+
+{% endblock %}
