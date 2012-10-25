@@ -24,23 +24,19 @@ Philosophy
 ----------
 
 • Rapid development
-• Loose coupling TODO
+• Loose coupling
 • Reusable applications
 • DRY: Don't repeat yourself
 
-Arkitektur
-----------
 
-(TODO)
-
-Useful parts
-------------
+Features (of a modern web framework)
+------------------------------------
 
 • Sessions
 • Forms
 • Validation
 • Authentication
-• Admin
+• Admin interface
 • Serialization (JSON, XML++)
 • Syndication (RSS, Atom)
 • Testing
@@ -49,6 +45,7 @@ Useful parts
 • GeoDjango
 • Built-in webserver
 • Interactive shell
+
 
 Starting a project
 ==================
@@ -86,6 +83,9 @@ and common code will live.
 
 .. TODO: Output from ls
 
+Creating an app
+---------------
+
 Create an app using the ``manage.py`` command::
 
     ./manage.py startapp recipes
@@ -97,8 +97,53 @@ The database name will be the name of a local file in your project folder.
 Sqlite is a single-file database system that is easy to use when developing,
 but not usable in a large system.
 
-Refresh the browser. (TODO). It is useful to keep a terminal always running manage.py
-runserver.
+Now, you should enable your new app in the project settings, by appending your
+appname to the ``INSTALLED_APPS`` tuple, near the bottom. The section should
+look something like::
+
+    INSTALLED_APPS = (
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.sites',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        # Uncomment the next line to enable the admin:
+        # 'django.contrib.admin',
+        # Uncomment the next line to enable admin documentation:
+        # 'django.contrib.admindocs',
+        'recipes',
+    )
+
+You have not heard about url patterns yet. On the project level, they are
+defined in urls.py in the project folder. We want to keep the url patterns for
+this app separated from the project, in a way that the urls this app should
+respond to will start with ``recipes/``. To do this, add a line to the pattern
+list in urls.py containing ``url(r'^recipes/', include('recipes.urls')),``, so
+that the patterns looks like this::
+
+urlpatterns = patterns('',
+    # Examples:
+    # url(r'^$', 'djecipes.views.home', name='home'),
+    # url(r'^djecipes/', include('djecipes.foo.urls')),
+
+    # Uncomment the admin/doc line below to enable admin documentation:
+    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+
+    # Uncomment the next line to enable the admin:
+    # url(r'^admin/', include(admin.site.urls)),
+    url(r'^recipes/', include('recipes.urls')),
+)
+
+It is useful to keep a terminal always running manage.py runserver. Refresh the
+browser and see that complains about a page not being found. It also tells you
+that the only urls it knows about are those starting with ``recipes/``. Append
+that to your browser address bar, and see the next error message.
+
+Now it complains about a *urlconf* without patterns. We have told Django that
+our app should handle these urls, but we have do not have any views to show,
+and therefore no urls pointing to these views. It's time to take a break and
+think about the models of our application.
 
 Models, views, templates?
 =========================
@@ -136,12 +181,46 @@ Your first model
 That's enough theory for a while. Now we will add a very simple model to
 ``models.py``. This is the model for all the types of food we will use in the
 recipes. It will only have one field we need to know of. Django will
-automatically give it an **id** field for the primary key. Add the following::
+automatically give it an **id** field for the primary key. Add the following i
+to models.py::
 
     from django.db import models
 
     class Food(models.Model):
         name = models.CharField(max_length=20)
+
+This model has to be used by the database. Django has a manage command called
+``syncdb`` that will setup and all tables needed by Django for us. But wait a
+minute. Using a third party tool called *south* we can get database migrations
+as well.
+
+Set up database migration support
+---------------------------------
+
+Database migrations let you script the database changes so you can go from one verssion to another without manually executing ``create table`` or other sql commands. You can also use this for data migrations, but we will not get into that now.
+
+In settings.py, near the bottom, you have INSTALLED_APPS. Add ``'south',`` to the bottom and install the module by executing::
+
+    pip install south
+
+To create your first migration on the recipes app/module, run::
+
+    ./manage.py schemamigration recipes --init
+
+This will only create the migration, not do anything to the database, as you can create more migrations and execute them at the same time. It will also prevent the *syncdb* command from creating your databases without migration support.
+
+To actually run this command, you need to run the management command ``migrate``. This will only take care of your new app *recipes* (since only this has migrations defined). To do both *syncdb* and *migrate* at the same time, run::
+
+    ./manage.py syncdb --migrate
+
+The first time syncdb is run, it will ask you to create a user. We are going to use the built-in admin interface where you later can create users, but to log in and do that, you need a user, so please answer yes and fill in the information.
+
+The output from the syncdb command clearly states that the django apps specified in INSTALLED_APPS, except for your recipes, has been set up using the normal syncdb, and that your recipes app has been set up using a migration.
+
+.. TODO: Add output from syncdb
+
+Set up admin interface
+----------------------
 
 Now we will utilize the built-in **admin** interface of Django. In ``urls.py``
 in the project folder, uncomment the lines regarding *admin* (not admindoc).
@@ -154,17 +233,17 @@ Also make a new line to forward all urls starting with *recipes* to your app::
     admin.autodiscover()
 
     urlpatterns = patterns('',
-                           # Examples:
-                           # url(r'^$', 'djecipes.views.home', name='home'),
-                           # url(r'^djecipes/', include('djecipes.foo.urls')),
+       # Examples:
+       # url(r'^$', 'djecipes.views.home', name='home'),
+       # url(r'^djecipes/', include('djecipes.foo.urls')),
 
-                           # Uncomment the admin/doc line below to enable admin documentation:
-                           # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+       # Uncomment the admin/doc line below to enable admin documentation:
+       # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-                           # Uncomment the next line to enable the admin:
-                           url(r'^admin/', include(admin.site.urls)),
+       # Uncomment the next line to enable the admin:
+       url(r'^admin/', include(admin.site.urls)),
 
-                           url(r'^recipes/', include('recipes.urls'))
+       url(r'^recipes/', include('recipes.urls'))
     )
 
 The last line forwards everything starting with *recipes/* to the python module *recipes.urls*. There is more than one way to create this module, but the
@@ -179,44 +258,22 @@ It should look similar to::
     urlpatterns = patterns('',
                            )
 
-#TODO Try to run
+To let the admin interface administer your Food model, define an admin.py in the app folder containing::
+
+    from django.contrib import admin
+    from recipes.models import Food
+
+    admin.site.register(Food)
 
 In settings.py, find INSTALLED_APPS and uncomment the line
-``'django.contrib.admin',`` as well as add your own app ``'recipes',`` to the
-bottom of the list. Also add a line containing ``'south',`` to allow for
-semi-automatic database migrations. You will also need to install the south
-module::
-
-    pip install south
-
-When changing the database layout, it is very useful to be able to script your
-changes. Migration of database schema and data is usually done by the
-third-party app named **south**. 
-
-If you now have a look at ``localhost:8000``, you should se an error telling you that one of the database tables does not exist. Now create a migration to do the database work needed::
-
-    ./manage.py schemamigration recipes --init
-
-This will not do the actual migration, just create the script needed for you.
-And running it will not touch anything else. You need to run set up django's
-tables too. The command ``syncdb`` will run everyhing needed to get the
-database up and running, but will not touch apps where there are migrations
-defined. You can run migrations separately using the ``migrate`` command, or
-run a combined command, like this, that will do everything::
-
-    ./manage.py syncdb --migrate
-
-#TODO: sjekk at admin.py er laget over
-
-To log into admin, you need a user, and creating users are done in the admin. So the first time this script is run for an application, it asks if you want to short-circut this loop by creating a user for you. Go on by filling in usernames, passwords, etc.
-
-The output from the syncdb command clearly states that the django apps specified in INSTALLED_APPS, except for your recipes, has been set up using the normal sync, and that your recipes app has been set up using a migration.
-
-.. TODO: Add output from syncdb
+``'django.contrib.admin',``.
 
 Now, have a look in your browser. It should tell you that you have set up some routes. One to *recipes* and one to *admin*. Try to append ``admin`` to the url.
 
 You should now be able to log in and have a look around. You should see some predefined classes from Django like User and Group, but also your very own Food. Click on it and add some food using the *Add food* button in the top right corner.
+
+Adding a method to your model
+-----------------------------
 
 When looking at the list, you see that you have created a *Food object*. When you have created more, this is not so useful. In your models.py add a function named ``__unicode__`` to your Food class. Make it to return self.name, like this::
 
@@ -250,6 +307,10 @@ And a line to the pattern list to get all food::
 
     url(r'^food/$', food_list, name='food-list'),
 
+
+Adding a template
+-----------------
+
 Now ``/recipes/food/`` should trigger the newly created ``food_list`` function.
 
 Try it and see that you get an error message. It tells you to make a template
@@ -260,7 +321,8 @@ keep away from configuring too much in the settings file)::
 
 And create a file in the newly created folder called ``food_list.html``
 containing (copied from
-http://twitter.github.com/bootstrap/getting-started.html)::
+http://twitter.github.com/bootstrap/getting-started.html and changed to get
+static media from Django's locations)::
 
     <!DOCTYPE html>
     <html>
@@ -276,10 +338,7 @@ http://twitter.github.com/bootstrap/getting-started.html)::
     </body>
     </html>
 
-*Twitter Bootstrap* is a good default to use when creating web projects. It is
-free and easy to use, also commercially.
-
-This template needs some files from the Twitter Bootstrap project, so in your
+This template needs some files from the *Twitter Bootstrap* project, so in your
 app folder, download twitter bootstrap static files, unzip and rename the
 directory to ``static``::
 
@@ -306,7 +365,7 @@ that will later be used for adding more food to our list.
 A second view
 -------------
 
-It shoudn't be much harder than the first one. But first, we will change the first view to be a **Class based generic view**.
+It shouldn't be much harder than the first one. But first, we will change the first view to be a **Class based generic view**.
 
 The rewritten view file should look like::
 
@@ -347,8 +406,8 @@ parameter in the url patterns. Also, the url patterns take in parameters. The
 object. The url patterns are used for both matching *and* link generation.
 
 When you have a look at the web browser now, you see by hovering the mouse over
-the links that they point somewhere. Try clicking one of them. Ooops, we need
-to make another template. *templates/food_detail.html* is missing.
+the links that they point somewhere. By clicking one of them, you will see we
+need to make another template. *templates/food_detail.html* is missing.
 
 Copy the template you already have to food_detail.html in the same folder.
 Change the new template to add a new title, h1 and the contents itself. The
@@ -455,7 +514,9 @@ And add the ``crispy`` filter to the form variable. Not the best example with on
 • PAUSE
 • Tegning av recipe-obj med ingredient av food
 • Legg til ingredient og recipe i modell
+
 TODO: Referanse til dok
+
 • med __unicode__
 • Og i admin
 • Legg til ny oppskrift - se at vi mangler felt - legg til blank=True
@@ -502,6 +563,8 @@ Later lessions:
 • unit testing
 • authentication
 
+How about making it depending on errors? django-by-errors
+
 
 Indices and tables
 ==================
@@ -509,4 +572,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
 
