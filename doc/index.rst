@@ -14,37 +14,36 @@ Contents:
 About Django
 ============
 
-• Web application framework
-• Written in Python
-• Free software (BSD)
-• Lots of documentation
+- Web application framework
+- Written in Python
+- Free software (BSD)
+- Lots of documentation
 
 
 Philosophy
 ----------
 
-• Rapid development
-• Loose coupling
-• Reusable applications
-• DRY: Don't repeat yourself
+- Rapid development
+- Loose coupling
+- Reusable applications
+- DRY: Don't repeat yourself
 
 
 Features (of a modern web framework)
 ------------------------------------
 
-• Sessions
-• Forms
-• Validation
-• Authentication
-• Admin interface
-• Serialization (JSON, XML++)
-• Syndication (RSS, Atom)
-• Testing
-• Caching
-• Localization (l10n) and internationalization (i18n)
-• GeoDjango
-• Built-in webserver
-• Interactive shell
+- Forms
+- Validation
+- Sessions
+- Authentication
+- Admin interface
+- Serialization (JSON, XML++)
+- Syndication (RSS, Atom)
+- Built-in webserver
+- Testing
+- Caching
+- Localization (l10n) and internationalization (i18n)
+- GeoDjango
 
 
 Starting a project
@@ -122,18 +121,18 @@ respond to will start with ``recipes/``. To do this, add a line to the pattern
 list in urls.py containing ``url(r'^recipes/', include('recipes.urls')),``, so
 that the patterns looks like this::
 
-urlpatterns = patterns('',
-    # Examples:
-    # url(r'^$', 'djecipes.views.home', name='home'),
-    # url(r'^djecipes/', include('djecipes.foo.urls')),
+    urlpatterns = patterns('',
+        # Examples:
+        # url(r'^$', 'djecipes.views.home', name='home'),
+        # url(r'^djecipes/', include('djecipes.foo.urls')),
 
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+        # Uncomment the admin/doc line below to enable admin documentation:
+        # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
-    url(r'^recipes/', include('recipes.urls')),
-)
+        # Uncomment the next line to enable the admin:
+        # url(r'^admin/', include(admin.site.urls)),
+        url(r'^recipes/', include('recipes.urls')),
+    )
 
 It is useful to keep a terminal always running manage.py runserver. Refresh the
 browser and see that complains about a page not being found. It also tells you
@@ -409,7 +408,7 @@ When you have a look at the web browser now, you see by hovering the mouse over
 the links that they point somewhere. By clicking one of them, you will see we
 need to make another template. *templates/food_detail.html* is missing.
 
-Copy the template you already have to food_detail.html in the same folder.
+Copy the template you already have to ``food_detail.html`` in the same folder.
 Change the new template to add a new title, h1 and the contents itself. The
 contents is not too much fun as we do only have one field in the Food model.
 Add a few <p> with the object id and name, and a link back to the list, like
@@ -419,6 +418,9 @@ this::
 
     <p>{{ object.id }}</p>
     <p>{{ object.name }}</p>
+
+Don't repeat yourself
+---------------------
 
 When you look at the two templates, you see that there is a lot of common code in them. Create a new template one folder level up called ``base.html`` with the common code, like this::
 
@@ -461,6 +463,9 @@ Now remove the common code from the other two templates and add a line to tell t
     <a href="{% url food-create %}" class="btn btn-primary">Add new</a>
     {% endblock %}
 
+A view to create objects
+------------------------
+
 You already have a *create* link in the list page, now we'll add the
 functionality. Add a CreateView to the import at the top of views.py, and
 create a new view like::
@@ -474,8 +479,9 @@ In the urls.py, add the new FoodCreateView to the import at the top, and add a n
 
 Now you can update the create link in the list template to use the new and named ``food-create``.
 
-Clicking the new link will also give an error about a missing template. Create t
-he missing *food_form.html*. It will look very similar to the other two templates, but with a form in it::
+Clicking the new link will also give an error about a missing template. Create
+the missing *food_form.html*. It will look very similar to the other two
+templates, but with a form in it::
 
     {% extends "base.html" %}
 
@@ -484,7 +490,7 @@ he missing *food_form.html*. It will look very similar to the other two template
     {% block content %}
     <h1>Add food</h1>
 
-    <form method="post">
+    <form>
     {{ form }}
     <button type="submit">Save</button>
     </form>
@@ -504,49 +510,395 @@ Below the extends line in the form, add::
 
     {% load crispy_forms_tags %}
 
-And add the ``crispy`` filter to the form variable. Not the best example with only one variable in the form.
+And add the ``crispy`` filter to the form variable. Not the best example with
+only one variable in the form.
 
+Now, add a fruit name and click "Save". The url changes, but you are still on the same page. Our Django view will answer differently on GET and POST requests, but we did not tell the form to use the http POST method. Change the form definition to use the POST method::
 
-• Trykk på save uten endringer
-• Legg på method=post
-• Legg på csrf_token
-• Legg på get_absolute_url
-• PAUSE
-• Tegning av recipe-obj med ingredient av food
-• Legg til ingredient og recipe i modell
+    <form method="POST">
 
-TODO: Referanse til dok
+If we try again, we will see another error, complaining about "Cross site
+request forgery". Django uses an established mechanism to decide that a request
+originates from the same site. This is done by using the ``SECRET`` in
+settings.py to generate a combination of characters that will be attached as
+hidden fields to all forms, and then be validated on the servers when the form
+is posted. All you have to do is to add a ``{% csrf_token %}`` to your form.
+Add this e.g. at the same line as the form definition tag, like this::
 
-• med __unicode__
-• Og i admin
-• Legg til ny oppskrift - se at vi mangler felt - legg til blank=True
-• Legg til ingrediens i admin fra oppskriftsida
-• Legg til __unicode__ med get_measurement_display()
-• Først med %f så %.2f
-• Change admin to show which recipe an ingredient belongs to list_display = ('food', 'amount', 'measurement', 'recipe') LATER
-• PAUSE
-• List pancakes
-• Copy-paste templates
-• Legg til description med default: "No description"
-• Lag add recipe i lista
-• Lag url og view
-• Test og se at det knekker
-• Lag template
-• Test og se at det knekker
-• Lag get_absolute_url
-• PAUSE
-• Lag edit description på recipe-objeketet
-• Legg til i models og urls
-• PAUSE
-• Add view to add ingredients
-• Add url
-• Add template
-• See that you choose recipe in list
-• Add get_initial
-• Lag forms.py (model = Ingredient, recipe widget HiddenInput)
-• Test og se at det mangler get_success_url
-• Lag funksjon, og legg inn args=[self.kwargs['slug']]
-• PAUSE
+    <form method="POST">{% csrf_token %}
+
+Now, try to save again. Another error! So much errors, so much to learn! This
+time Django complains about not knowing where to send you after the form has
+been parsed and your object saved. You would need to define either a
+``success_url`` in the view, to tell it where to go, or you can let Django go
+back to the detailed view for the object. This is kind of a default option, as
+long as you have a ``get_absolute_url`` method defined in your model. Head over
+to models.py and add a method at the bottom of your Food class (on the same
+indentation level as ``__unicode__``)::
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('food-detail', [self.id])
+
+The ``@models.permalink`` gives a short and easier way to write a url than when
+calling ``reverse`` yourself.
+
+Now, go back and add a fruit and click save. Nice? If you now have two fruits
+with the same name, that is because your fruit got added even though your
+success link were missing.
+
+To be sure you will never register the same fruit twice, you can add
+``unique=True`` within the definition of ``name`` in your model class.
+
+Now you know how to add a model and some views to list, see details or add new
+objects.
+
+More models
+===========
+
+To be able to create recipes, we need at least two more models. A recipe model
+is obvious, where we can add ingredients and a description of how to use the
+ingredients. But how do we connect the recipes to the food objects?
+
+Adding ManyToMany(REF) is too simple, then we only know what ingredients we
+use, but not how much of what. You can read about ManyToMany, and you should be
+able to understand how to do it after you have finished the next steps.
+
+# TODO: Add figure
+
+We need to say what Food object we will use, how much of it, and to what
+ingredient we want it added. When saying how much, we need to know the
+measurement, as "1 milk" is not so useful.
+
+We will first define the Recipe model. It will have a title, a description of
+unknown length, and a unicode method as we have already seen. But wouldn't it
+be nice to have a nice looking url? From the news paper agencies (where Django
+was first created), we have gotten *slug*s, readable parts of a url that will
+be used to identify an object. We will add a slug field that will hold a nice
+urlized version of the object's title::
+
+    class Recipe(models.Model):
+        title = models.CharField(max_length=80)
+        slug = models.SlugField(max_length=80)
+        description = models.TextField()
+
+        def __unicode__(self):
+            return self.title
+
+To connect the Recipe to the Food, we create a table to hold the references as well as the measurement fields::
+
+    class Ingredient(models.Model):
+        recipe = models.ForeignKey(Recipe)
+        food = models.ForeignKey(Food)
+        amount = models.DecimalField(decimal_places=2, max_digits=4)
+        measurement = models.SmallIntegerField(choices=MEASUREMENT_CHOICES)
+
+We have *ForeignKey* fields that connects the Ingredient to a Food object and a
+Recipe object. The amount is defined as a DecimalField and the measurement as a
+SmallIntegerField. We could have created a table for all the different
+measurements available, but we want to see how to make predefined choices. The
+measurements will be saved as a number, but should be treated as a choice of
+strings all the way through the application. In the above model definition, we
+refer to ``MEASUREMENT_CHOICES`` which are not defined. Define some choices
+*above* the Ingredient model definition, like this::
+
+    MEASUREMENT_CHOICES = (
+        (1, "piece"),
+        (2, "liter"),
+        (3, "cup"),
+        (4, "tablespoon"),
+        (5, "teaspoon"),
+    )
+
+Migrations, simple
+------------------
+
+Now that we have defined new models, we should create and run a new migration as well. To create a new migration, run::
+
+    ./manage.py schemamigration --auto recipe
+
+And run it with::
+
+    ./manage.py syncdb --migrate
+
+Extending the admin inteface
+----------------------------
+
+Register the two new models with the admin interface::
+
+    admin.site.register(Recipe)
+    admin.site.register(Ingredient)
+
+In the admin interface (at /admin), try to add a new recipe, e.g. *Pancakes*.
+Insert "Basic Pancakes" as the title and "basic-pancakes" as the slug. Try to
+save without filling in the "description" field. Click *Save*. Form validations
+will not let you save this without filling in a description. Or telling the
+model that an empty description is OK, by adding ``blank=True`` to the
+description field, like::
+
+    description = models.TextField(blank=True)
+
+That worked. Before adding ingredient objects, go back and add some more food
+objects, like "egg", "milk", "salt" and "wheat flour".
+
+And then, add a new ingredient object. Choose "Basic Pancakes", "Milk", "0.5"
+and "liter" and save.
+
+We get redirected back to the Ingredient list, and see that we need to add a
+__unicode__ method to the ingredient class. Python has several ways to format a
+string to look nice(REF). The first attempt is to add the method like this::
+
+    def __unicode__(self):
+        return "%f %s %s (%s)" % (self.amount, self.measurement, self.food, self.recipe)
+
+Here, we output a number which may contain decimals for the amount, a string
+for the measurement and a string in parentheses for the recipe it belongs to.
+
+When refreshing the ingredient list page, you see that the ``%f`` gives a lot
+of unneeded decimals. Change this to ``%.2f`` to allow at most two decimals.
+(FIXME)
+
+You also spot that the line does not print out the measurement, only the
+numerical id. So change the ``self.measurement`` to
+``self.get_measurement_display()`` to use a method that is dynamically
+available to fields with choices. (In documentation this is called
+``get_FIELD_display()``).
+
+But instead of using the object's string representation in a single cell in the
+table, you can define how to represent the object in the admin interface.
+Replace the Ingredient line in admin.py with this::
+
+    class IngredientAdmin(admin.ModelAdmin):
+        list_display = ('food', 'amount', 'measurement', 'recipe')
+
+Here, you also see that the measurement is printed nicely.
+
+New views
+---------
+
+Yes, everything looks nice in the admin interface, but it is not something we want do expose to our users. We need to get similar functionality in our own views.
+
+We want to list all recipes, so you should add a RecipeListView and a RecipeDetailView to views.py. You probably know how to do it now::
+
+    class RecipeListView(ListView):
+        model = Recipe
+
+    class RecipeDetailView(DetailView):
+        model = Recipe
+
+Create two new url pattern like this to the urls.py, and remember to do the
+correct import at the top::
+
+    url(r'^$', RecipeListView.as_view(), name='recipe-list'),
+    url(r'^(?P<slug>[-\w]+)/$', RecipeDetailView.as_view(), name='recipe-detail'),
+
+The first will match the address "/recipes/". The second will match "/recipes/"
+plus "a string containing numbers, letters, hyphen and underscore" plus "/".
+This is used to match the slug field we described earlier. The ``P<slug>``
+actually saves the value to a parameter named "slug", which is treated almost
+like an id internally by Django. Remember to import the new views from
+recipes.views.
+
+Now copy the template *food_list.html* to *recipe_list.html* in the same
+folder, and modify the new recipe list to be useful to list recipes. Also get the list to link to the recipe-detail url that you just created.
+
+While you are at it, copy *food_detail.html* to *recipe_detail.html* and modify that as well. The contents could be something like::
+
+    <h1>{{ object.title }}</h1>
+
+    <p><a href="{% url recipe-list %}">Back to recipe list</a></p>
+
+    <h2>Ingredients</h2>
+    <ul>
+    {% for ingredient in object.ingredient_set.all %}
+    <li>{{ ingredient}}</li>
+    {% endfor %}
+    </ul>
+
+    <h2>Description</h2>
+    <p>{{ object.description }}</p>
+
+Here you see how we can list out the ingredients of the recipe.
+
+You should now be able to navigate between the list and the detailed recipe(s).
+In the recipe_detail.html you just created, change the last line to add
+``|default:"No description"`` to print out a default value when the description
+has not been added. In case you wonder, this is how it should look::
+
+    <p>{{ object.description|default:"No description" }}</p>
+
+We have just used our first *filter* (REF).
+
+Add recipes
+-----------
+
+Now, add a new view by doing it the other way around. Add a new link at the
+bottom of the recipe_list.html. Like this::
+
+    <a href="{% url recipe-create %}" class="btn btn-primary">Add new</a>
+
+Here, we point to a url pattern called recipe-create, and if you try to view the recipe list now, you will get an error message telling you this, you are using a link that is not defined. So head over to urls.py and add recipe-create *before* the recipe-detail url (if you put it after, the recipe-detail will be reached first, and you will try to fetch a recipe called "new")::
+
+    url(r'^new/$', RecipeCreateView.as_view(), name='recipe-create'),
+
+If you try to view the recipe-list in the browser now, you will see an error message telling you that RecipeCreateView is not defined. Add the missing import line, try again, and you will get an error message telling you that it will not find RecipeCreteView in views.py. So, go ahead and create that simple function::
+
+    class RecipeCreateView(CreateView):
+        model = Recipe
+
+Try it in your browser. Yes, we are once again see the error about a missing template. Even if this is a new template, the contents should look very familiar. You can copy food_form.html to recipe_form.html and do just a few modifications if you want to::
+
+    {% extends "base.html" %}
+    {% load crispy_forms_tags %}
+
+    {% block title %}Recipe{% endblock %}
+
+    {% block content %}
+
+    <h1>Recipe</h1>
+
+    <form method="post">
+        {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+
+    {% endblock %}
+
+Now, you should see something useful in your browser. Try create a simple
+recipe, were you do not use too much time, as I now warn you that this will end
+in an error.  Yes, once again, Django complains about a missing *success_url* -
+it does not know where to send us after the object is created.
+
+This, you have also already done already. Create a method in the Recipe model named ``get_aboslute_url`` that will return the recipe-detail url::
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('recipe-detail', [self.slug])
+
+You see how we use include the slug when creating this url, as we need that to
+access the human readable url.
+
+Try to add another recipe, to see that everything is now working.
+
+Editing an object
+=================
+
+The way to edit an object is not too different from creating a new object. It
+is inf fact so similar that Django by default reuses the same template. As we
+will see, one of the differences is how we need to identify the object we are
+going to edit.
+
+To the recipe-detail template, add a link to a still undefined url
+``recipe-update``::
+
+    <p><a href="{% url recipe-update object.slug %}">Edit description</a></p>
+
+The url will contain the slug, like the detail view::
+
+    url(r'^(?P<slug>[-\w]+)/edit/$', RecipeUpdateView.as_view(), name='recipe-updat e')
+
+The view will not be very different from before, but you need to remember to
+import UpdateView and then the view itself::
+
+    class RecipeUpdateView(UpdateView):
+        model = Recipe
+
+Now this should work without adding another template, as the *recipe_form.html*
+will be used by both the create view and the update view. You will see that the
+template still says "Add recipe". To demonstrate how to use a non-default
+template, copy the recipe_form.html to other_file.html, change it so it to say
+"Change recipe" and set a template_name variable in the view to that
+recipes/other_file.html::
+
+    class RecipeUpdateView(UpdateView):
+        model = Recipe
+        template_name = "recipes/other_file.html"
+
+Oh, ingredients
+===============
+
+The last thing to do is to combine all of this and add, show and delete ingredients. Start by adding a link to the recipe-list template where your users can click to add ingredients::
+
+    <p><a href="{% url ingredient-create object.slug %}">Add ingredient</a></p>
+
+You see that we need we send in the slug of the object so that we do not need our users to choose this from a menu later. This slug is of course also part of the needed url pattern::
+
+    url(r'^(?P<slug>[-\w]+)/add_ingredient/$', IngredientCreateView.as_view(), name='ingredient-create'),
+
+We first define the view as simple as possible::
+
+    class IngredientCreateView(CreateView):
+        model = Ingredient
+
+This will now work, except for the missing template, *ingredient_form.html*::
+
+    {% extends "base.html" %}
+    {% load crispy_forms_tags %}
+
+    {% block title %}Add ingredient{% endblock %}
+
+    {% block content %}
+
+    <h1>Add ingredient</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+
+    {% endblock %}
+
+When you look at the form in your browser, you see that you can make it a
+little bit simpler to use by taking away the "Recipe" form field. First, add a
+method to the ``IngredientCreateView`` that will select initial values in our
+form::
+
+    def get_initial(self, *args, **kwargs):
+        recipe = Recipe.objects.get(slug=self.kwargs['slug'])
+        return {'recipe': recipe}
+
+This will use the slug to fetch the corresponding ``Recipe`` object, and use
+that to fill in the initial value of the ``recipe`` form field. Try it out and
+see that it works.
+
+The next step is to hide the field from the user, as they should no longer need
+to do anything to it. To hide the field, you need to define your own form. We
+do this by creating a new file in the same folder as views.py called
+*forms.py*. In this file, we define a new ``ModelForm`` (REF), a form that will
+be based on the ``Ingredient`` model, and we override the form widget used to
+show the recipe field::
+
+    from django.forms import ModelForm, HiddenInput
+    from recipes.models import Ingredient
+
+    class IngredientForm(ModelForm):
+
+        class Meta:
+            model = Ingredient
+            widgets = {'recipe': HiddenInput()}
+
+Now, have a look. Isn't it easier? Try to add some ingredients. Oh noes!
+Another error! This time, we will actually define a success url, as we do not
+want to show any details about "1 tablespoon of salt". We want to redirect back
+to the recipe details instead. To the same view, add a method called
+``get_success_url`` that contains::
+
+    def get_success_url(self):
+        return reverse('recipe-detail', args=[self.kwargs['slug']])
+
+Deleting objects
+----------------
+
+You have probably done your fair share of testing now, and have accumulated a large amount of testdata. Some ingredients have been created that does not belong to some recipes, so we need to delete them.
+
+First, add a link to each ingredient row in the recipe detail template. It could say "delete" or be a little "x", but it should point to the url you name "ingredient-delete", and it should take in the object's slug and the ingredient's id::
+
+    <li>{{ ingredient }} <a href="{% url ingredient-delete object.slug ingredient.id %}">x</a></li>
+
+#TODO: icon-remove eller url next?
+
 • Lag delete-link med icon-remove
 • Se at det ikke virker, og lag ingredient_conform_delete.html
 • Husk å få med form med submit og cancel
