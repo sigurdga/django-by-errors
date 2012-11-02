@@ -897,25 +897,136 @@ First, add a link to each ingredient row in the recipe detail template. It could
 
     <li>{{ ingredient }} <a href="{% url ingredient-delete object.slug ingredient.id %}">x</a></li>
 
-#TODO: icon-remove eller url next?
+Now, create the url pattern this points to::
 
-• Lag delete-link med icon-remove
-• Se at det ikke virker, og lag ingredient_conform_delete.html
-• Husk å få med form med submit og cancel
-• (vis objektene i cancel)
-• Se at vi mangler get_success_url: bruk samme som sist
-• PAUSE
-• Markdown i skrivefelt: i toppen og django.contrib.markup i settings
-• Se at det feiler og installer markdown
-• Toppmeny - lim inn fra bootstrap
+    url(r'^(?P<slug>[-\w]+)/remove_ingredient/(?P<pk>\d+)/$', IngredientDeleteView.as_view(), name='ingredient-delete'),
 
+This is probably the longest of them all as we use both the slug and the
+ingredient's id field. You maybe wonder if we really need to pick up the slug
+again, since the ingredient's id should be unique alone, but it is a nice
+looking url, and it will save us from some work later.
 
-Later lessions:
-• debugging with ipython, pdb, web error
-• unit testing
-• authentication
+So, happily knowing what is going on, you bring up your browser and try to
+delete one of the silly test ingredients, but what? An error? Missing an
+*ingredient_confirm_delete.html* was maybe a bit unexpected.
 
-How about making it depending on errors? django-by-errors
+Delete confirmation
+-------------------
+
+The default delete view is doing the same thing as the create and update views
+by showing a form on a GET request and processing the form on the form on a
+POST request.
+
+There are several ways to circumvent the confirm_MODEL_delete.html templates,
+by using a button in a small form, using javascript to send a POST request
+instead of a get on the link clicking, redirecting from the GET to the POST…
+but I think a delete confirmation page is a good habit, especially when listing
+out related objects that would also be deleted. The *ingredient_confirm_delete* could look something like::
+
+    {% extends "base.html" %}
+
+    {% block title %}Delete ingredient{% endblock %}
+
+    {% block content %}
+    <h1>Delete ingredient</h1>
+
+    <h2>Really delete {{ object }} from {{ object.recipe }}?</h2>
+
+    <p>It will be permanently lost</p>
+
+    <form method="post">{% csrf_token %}
+        <button type="submit">Delete</button>
+    </form>
+
+    {% endblock %}
+
+# FIXME: se om det er noe vits med form-output
+
+The important thing is the delete button. Skipping the ``csrf_token`` will give
+back the error about cross site scripting attacks again.
+
+You should really add a cancel button to the form as well to help the users,
+bringing them back to the detail page without changing anything::
+
+    <a href="{% url recipe-detail object.recipe.slug %}">Cancel</a>
+
+Now this is now a small form with a button and a small link. If you add some
+css classes defined in the Twitter Bootstrap css, it can be a lot nicer. Add
+``class="btn"`` to the cancel link to style it like a button, and ``class="btn
+btn-primary"`` to the delete button to make it look like a default action
+button.
+
+Yes, this is nice an shiny, but the form is still not working. If you try it,
+you'll see that we are missing a success-url. This time, we will just copy the
+``get_success_url`` we made in ``IngredientCreateView`` to
+``IngredientDeleteView`` to get the same redirect back to the
+``recipe-detail``::
+
+    def get_success_url(self):
+        return reverse('recipe-detail', args=[self.kwargs['slug']])
+
+Now, this looks better, and redirects us to the recipe we deleted the
+ingredient from. Just to show off, we could replace the delete link on the
+recipe detail view with an icon from Twitter Bootstrap, by adding an
+``<i>``-tag with a class representing the icon we want to use ("icon-remove")
+from http://twitter.github.com/bootstrap/base-css.html#icons::
+
+    <li>{{ ingredient}} <a href="{% url ingredient-delete object.slug ingredient.id %}"><i class="icon-remove"></i></a></li>
+
+Easier editing with Markdown
+----------------------------
+
+Try to edit the description of a recipe and save it. The description of a
+recipe will probably consist of several steps on a way to the finished meal,
+and you would probably want to put these steps in several paragraphs or a list.
+As you probably guess, you would need to type html to get this nice looking.
+
+There is a filter called "markdown" filter that will take a more simpler made
+text and convert it to html for you (REF). To the description field in the
+recipe-detail template, add ``|markdown`` between ``description`` and
+``|default``, like this::
+
+    <p>{{ object.description|markdown|default:"No description" }}</p>
+
+You shouldn't be surprised that this will not work. The error message should
+tell you that Django does not understand "markdown". You need to load a module
+where "markdown" is defined. On line two of the file, load the markup filters::
+
+    {% load markup %}
+
+This still does not work, because you also need to have a markdown library
+installed which this filter will contact to parse the text. Head over to a
+terminal where your virtualenv is activated, and install markdown using Python
+package installer, Pip::
+
+    pip install markdown
+
+You will also need to tell Django to actually load this file in settings.py. In the INSTALLED_APPS section, add::
+
+    'django.contrib.markup',
+
+You do not have an easy way to go between the recipe section and the food
+section of your website. What about using a fancy top menu from Twitter
+Bootstrap http://twitter.github.com/bootstrap/components.html#navbar? In
+"base.html" template (one level up from the other templates), add a this inside
+the "container" div, before the "content" block::
+
+    <div class="navbar">
+        <div class="navbar-inner">
+            <a class="brand" href="{% url recipe-list %}">Djecipes</a>
+            <ul class="nav">
+                <li><a href="{% url recipe-list %}">Recipes</a></li>
+                <li><a href="{% url food-list %}">Food</a></li>
+            </ul>
+        </div>
+    </div>
+
+Future sections?
+================
+
+- debugging with ipython, pdb, web error
+- unit testing
+- authentication
 
 
 Indices and tables
