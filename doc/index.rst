@@ -3,48 +3,69 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Djecipes's documentation!
-====================================
+############################################
+Django by errors - different Django tutorial
+############################################
 
-Contents:
+************
+Introduction
+************
 
-.. toctree::
-   :maxdepth: 2
+In this tutorial, we will focus on how to build a recipe site by taking one
+step at a time, seeing what error is waiting for us next.
+
+When learning a new programming language or framework, there are so many guides
+and tutorials on how to do everything right. But what do you do the first time
+you get an error?
+
+Here, we will be accustomed to as many error messages as possible while
+building a small site.
+
+In this tutorial, you will also learn how to use South for database migrations,
+and Twitter Bootstrap for a nice default site styling.
 
 About Django
 ============
 
-- Web application framework
-- Written in Python
-- Free software (BSD)
-- Lots of documentation
+Django (REF) is a web application framework written in Python (REF). As Python,
+it is Free software, licenced under the BSD licence (REF), and it has lots of
+documentation and a large community (REF) around.
 
+Django fosters **rapid development**, using an easy-to-learn and easy-to-read
+language like Python will let you not only make the computer understand what
+you mean, but also the people who may eventually inherit your scripts.
 
-Philosophy
-----------
+The components of Django are **loosely coupled**, so you can use another templating
+language instead of Django's own, and you can even change the model layer to
+use Sqlalchemy instead of the built-in Django ORM (Object relational mapper:
+the layer that translates your models to database language).
 
-- Rapid development
-- Loose coupling
-- Reusable applications
-- DRY: Don't repeat yourself
+In this tutorial, you will create a project, and then an application in that
+project. Django is built in a way that you will also be able to use third party
+applications inside your project, and you will in most cases start with a
+couple of Django applications. You can then build your apps in your projects in
+a way that you can mix them around and **reuse** them in other projects.
 
+One of the most important parts is that you should not write the same code over
+and over again. So in Django projects you should not see long sections
+duplicated over and over. The "class based views" we are going to use is one
+good improvement to this, and the template inheritance system is another way
+you will **not repeat yourself**.
 
-Features (of a modern web framework)
-------------------------------------
+************
+Simple steps
+************
 
-- Forms
-- Validation
-- Sessions
-- Authentication
-- Admin interface
-- Serialization (JSON, XML++)
-- Syndication (RSS, Atom)
-- Built-in webserver
-- Testing
-- Caching
-- Localization (l10n) and internationalization (i18n)
-- GeoDjango
+In this part, you will learn the most basic parts of Django, to get a feeling
+of how Django applications are built.
 
+We assume you have a computer with Python installed, as all modern operating
+systems come with Python installed. To check if python is installed, open up a
+terminal, write "python" and press enter. If the command was not found, you
+should install Python.
+
+We will also use "virtualenv". It should not be too hard to install, just check
+out their official installation documentation.
 
 Starting a project
 ==================
@@ -56,49 +77,97 @@ system. And activate your new virtual environment::
     virtualenv --no-site-packages .
     source bin/activate
 
-Install Django::
+You are now "inside" this virtual environment. You can type "deactivate" to get out of it. But be sure to be inside when installing Django::
 
     pip install django
 
-Start a new django project. I have named mine Djecipes::
+Now that Django is installed you have a new command inside the "bin" folder, which you can use to start a new Django project. I have named mine "recipes-project"::
 
-    ./bin/django-admin.py startproject djecipes
+    ./bin/django-admin.py startproject recipes_project
 
 Go into the **project folder**, make the ``manage.py`` script runnable and
-start the *built-in webserver* and go to ``localhost:8000`` in your web
-browser::
+start the *built-in webserver*::
 
-    cd djecipes
+    cd recipes_project
     chmod 755 manage.py
     ./manage.py runserver
 
-It tells you that something is working and that to continue, you should update
-your settings and create an **app**.  The apps are meant to be reusable
-components that you can tie together when building projects.
+Now go to ``localhost:8000`` in your web browser. It says "Welcome to Django",
+and tells you about your next steps: you should update your database settings
+and create an **app**.  The apps are meant to be *reusable* components that you
+can tie together when building projects.
+
+You can stop the server by pressing *ctrl-c* as suggested by the command
+output.
 
 Have a look around in your project folder. You will see a folder with the same
-name as your project, *djecipes*. This is where central project configuration
+name as your project, *recipes_project*. This is where central project configuration
 and common code will live.
 
-.. TODO: Output from ls
+Contents of project folder::
 
-Creating an app
----------------
+    $ ls
+    manage.py  recipes_project
 
-Create an app using the ``manage.py`` command::
+Contents of configuration folder::
 
-    ./manage.py startapp recipes
+    $ ls recipes_project
+    __init__.py   settings.py   urls.py   wsgi.py
+    __init__.pyc  settings.pyc  urls.pyc  wsgi.pyc
 
-Go into djecipes/settings.py and setup your database settings: Append
-``sqlite3`` to the ENGINE field and add a database name to the NAME field.
+The pyc-files are compiled versions of the source files. We do not need to
+bother too much about them, and if you remove them, they get recreated when the
+source file is run.
+
+Database setup
+--------------
+
+The welcoming page told us to setup the database. The database settings are
+part of the settings.py file in the configuration folder. Open up
+*recipes_project/settings.py* in your favourite text editor, and change the
+database settings: Append ``sqlite3`` to the ENGINE field and add a database
+name to the NAME field, "data.db" is a good name::
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'data.db',
+            'USER': '',
+            'PASSWORD': '',
+            'HOST': '',
+            'PORT': '',
+        }
+    }
 
 The database name will be the name of a local file in your project folder.
 Sqlite is a single-file database system that is easy to use when developing,
-but not usable in a large system.
+but not usable in a large system. I have take out the comments to get this
+fitted in the documentation.
 
-Now, you should enable your new app in the project settings, by appending your
-appname to the ``INSTALLED_APPS`` tuple, near the bottom. The section should
-look something like::
+Creating an app
+===============
+
+The welcoming page also wanted you to create an app. Do this using the
+``manage.py`` command in the project folder::
+
+    ./manage.py startapp recipes
+
+This will create a new folder structure for the new app besides "manage.py" and the inner "recipes_project", like this::
+
+    $ ls
+    manage.py  recipes  recipes_project
+
+And the new folder contains this::
+
+    $ ls recipes
+    __init__.py  __init__.pyc  models.py  models.pyc  tests.py  views.py
+
+Activating the app
+------------------
+
+Now, you should enable your new app in the project settings, by appending the
+name of your app to the ``INSTALLED_APPS`` tuple, near the bottom. The section
+should look something like::
 
     INSTALLED_APPS = (
         'django.contrib.auth',
@@ -114,59 +183,68 @@ look something like::
         'recipes',
     )
 
-You have not heard about url patterns yet. On the project level, they are
-defined in urls.py in the project folder. We want to keep the url patterns for
-this app separated from the project, in a way that the urls this app should
-respond to will start with ``recipes/``. To do this, add a line to the pattern
-list in urls.py containing ``url(r'^recipes/', include('recipes.urls')),``, so
-that the patterns looks like this::
+The extra comma at the end is optional on the last line, but I recommend it.
+
+Now, to route traffic to the new app, we also need to add a line to the list of
+url patterns Django will use to match incoming requests. In the project level
+urls.py, you will see a line like this::
+
+    # url(r'^recipes_project/', include('recipes_project.foo.urls')),
+
+The code with "#" is "commented out" and will not run. To make it active,
+remove the "#" and the first space. We will also change the line itself so it
+reads::
+
+    url(r'^recipes/', include('recipes.urls')),
+
+It is useful to keep a terminal always running ``./manage.py runserver``, and
+use another terminal window or tab for all the other commands you need to run.
+
+Refresh the browser and see that complains: "No module named recipes.urls"
+
+    PIC
+
+The line we just activated tells Django to look for url patterns in a file at
+"recipes/urls.py". That file does not exist yet. Copy the urls.py from the
+project folder into the app folder, and remove all the commented code and url
+patterns so that it looks like this::
+
+    from django.conf.urls import patterns, include, url
 
     urlpatterns = patterns('',
-        # Examples:
-        # url(r'^$', 'djecipes.views.home', name='home'),
-        # url(r'^djecipes/', include('djecipes.foo.urls')),
+            )
 
-        # Uncomment the admin/doc line below to enable admin documentation:
-        # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+Go to the browser and refresh. Now it says "Page not found (404)" which is a
+generic error message about a page not being found, but this also tells you
+what alternatives you have.
 
-        # Uncomment the next line to enable the admin:
-        # url(r'^admin/', include(admin.site.urls)),
-        url(r'^recipes/', include('recipes.urls')),
-    )
+    (PIC 404)
 
-It is useful to keep a terminal always running manage.py runserver. Refresh the
-browser and see that complains about a page not being found. It also tells you
-that the only urls it knows about are those starting with ``recipes/``. Append
-that to your browser address bar, and see the next error message.
+The page suggests that you should append "recipes/" to the address field of
+your browser. Go ahead, try it, and see that you get the first "It worked!"
+page again as there were no errors, but also, no contents.
+
 
 Now it complains about a *urlconf* without patterns. We have told Django that
 our app should handle these urls, but we have do not have any views to show,
 and therefore no urls pointing to these views. It's time to take a break and
 think about the models of our application.
 
-Models, views, templates?
-=========================
+***************************
+Models, views and templates
+***************************
 
-.. Todo: Output from ls
+There are different ways to organize code so it will not end up as a pile of
+spaghetti.  Have a look again in the *app* folder, you'll see four files ending
+in '.py'. The *__init__* is needed for the Python module that the app is to
+work, *models* will contain your models, *tests* will contain your tests, and
+*views* is the code that will build up different "pages"::
 
-Have a look around in the *app* folder. You should see models and views. Later
-we will have templates as well, but it is up to you if wants to place templates
-in the project level folder or the app level folder, so it is not already
-created for you.
+    $ ls recipes
+    __init__.py   models.py   tests.py  urls.pyc
+    __init__.pyc  models.pyc  urls.py   views.py
 
-.. TODO: Create graphic
-
-*Model view controller* is probably the most used user interaction pattern in
-the industry. It has been widely used and misused by different web frameworks
-where the framework has either been built around the pattern or parts of the
-framework has been given these names just to make it match the pattern.
-
-The architecture of Django does separate functionality into models, views and
-controllers, as it does not fit. The separation is done between models, views
-(parts of the traditional controller code, but also parts of the traditional
-view code) and templates (parts of the traditional view code), There is a lot
-to say about this, but the important part is to separate functionality into
-*database-near*, *templates* and other distinct functionality.
+Later we will add *templates* as well: HTML (REF) code that will decide the layout and design of your pages. The templates folder is not created automatically as it is possible to put templates other places as well.
 
 If you are coming from another language or framework, you will probably see
 that the templates are stricter than you are used to. You are not allowed to
@@ -174,16 +252,14 @@ put tons of functionality into the template code  A graphical designer should
 be able to understand and change the templates without knowing Python or
 Django.
 
-Your first model
-----------------
+Your first model: Food
+======================
 
 That's enough theory for a while. Now we will add a very simple model to
 ``models.py``. This is the model for all the types of food we will use in the
-recipes. It will only have one field we need to know of. Django will
-automatically give it an **id** field for the primary key. Add the following i
-to models.py::
-
-    from django.db import models
+recipes. It will only have one field we need to know of, the *name* of the food
+objects. Django will automatically give it an *id* field for the primary key.
+Add the following class to recipes/models.py::
 
     class Food(models.Model):
         name = models.CharField(max_length=20)
@@ -196,34 +272,78 @@ as well.
 Set up database migration support
 ---------------------------------
 
-Database migrations let you script the database changes so you can go from one verssion to another without manually executing ``create table`` or other sql commands. You can also use this for data migrations, but we will not get into that now.
+Database migrations let you script the database changes so you can go from one
+version to another without manually executing ``alter table`` or other sql
+commands. You can also use this for data migrations, but we will not get into
+that now. You need a third party app called "South" to do this. There have been
+discussions about taking all or parts of South into the core of Django 
 
-In settings.py, near the bottom, you have INSTALLED_APPS. Add ``'south',`` to the bottom and install the module by executing::
+In settings.py, add ``'south',`` to the bottom of the INSTALLED_APPS to use
+that app as well as your own. When saving the file, the running "runserver"
+process will stop, telling::
+
+    Error: No module named south
+
+You need to install the "south" app::
 
     pip install south
 
-To create your first migration on the recipes app/module, run::
+And restart your server.
+
+To create your first migration on the *recipes* app/module, run::
 
     ./manage.py schemamigration recipes --init
 
-This will only create the migration, not do anything to the database, as you can create more migrations and execute them at the same time. It will also prevent the *syncdb* command from creating your databases without migration support.
+This will only create the migration, not do anything to the database, as you
+can create more migrations and execute them at the same time. It will also
+prevent the *syncdb* command from creating your databases without migration
+support.
 
-To actually run this command, you need to run the management command ``migrate``. This will only take care of your new app *recipes* (since only this has migrations defined). To do both *syncdb* and *migrate* at the same time, run::
+To actually run this command, you need to run the management command
+``migrate``. This will only take care of your new app (since this is the only
+one with migrations defined). To do both *syncdb* and *migrate* at the same
+time, run::
 
     ./manage.py syncdb --migrate
 
-The first time syncdb is run, it will ask you to create a user. We are going to use the built-in admin interface where you later can create users, but to log in and do that, you need a user, so please answer yes and fill in the information.
+The first time syncdb is run, it will ask you to create a user. We will soon be
+using the built-in admin interface where you later can create users, but to log
+in and create users, you need a user, so please answer "yes" and fill in the
+information. The output will look similar to this::
 
-The output from the syncdb command clearly states that the django apps specified in INSTALLED_APPS, except for your recipes, has been set up using the normal syncdb, and that your recipes app has been set up using a migration.
+    Superuser created successfully.
+    Installing custom SQL ...
+    Installing indexes ...
+    Installed 0 object(s) from 0 fixture(s)
+    Migrating...
+    Running migrations for recipes:
+     - Migrating forwards to 0001_initial.
+     > recipes:0001_initial
+     - Loading initial data for recipes.
+    Installed 0 object(s) from 0 fixture(s)
 
-.. TODO: Add output from syncdb
+    Synced:
+     > django.contrib.auth
+     > django.contrib.contenttypes
+     > django.contrib.sessions
+     > django.contrib.sites
+     > django.contrib.messages
+     > django.contrib.staticfiles
+     > south
+
+    Migrated:
+     - recipes
+
+The output from the syncdb command states that all apps specified in
+INSTALLED_APPS, except for your recipes, has been set up using the normal
+syncdb, and that your recipes app has been set up using a migration.
 
 Set up admin interface
 ----------------------
 
-Now we will utilize the built-in **admin** interface of Django. In ``urls.py``
-in the project folder, uncomment the lines regarding *admin* (not admindoc).
-Also make a new line to forward all urls starting with *recipes* to your app::
+Now we will utilize the built-in Django Admin. In ``urls.py`` in the project
+folder, uncomment the lines regarding *admin* (not admindoc).  Also make a new
+line to forward all urls starting with *recipes* to your app::
 
     from django.conf.urls import patterns, include, url
 
@@ -233,60 +353,77 @@ Also make a new line to forward all urls starting with *recipes* to your app::
 
     urlpatterns = patterns('',
        # Examples:
-       # url(r'^$', 'djecipes.views.home', name='home'),
-       # url(r'^djecipes/', include('djecipes.foo.urls')),
+       # url(r'^$', 'recipes_project.views.home', name='home'),
+       url(r'^recipes/', include('recipes.urls')),
 
        # Uncomment the admin/doc line below to enable admin documentation:
        # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
        # Uncomment the next line to enable the admin:
        url(r'^admin/', include(admin.site.urls)),
-
-       url(r'^recipes/', include('recipes.urls'))
     )
 
-The last line forwards everything starting with *recipes/* to the python module *recipes.urls*. There is more than one way to create this module, but the
-simplest way is to add a new ``urls.py`` to your *app* folder. Copy the one
-from the project folder into the app folder, and remove the lines *inside* the
-*patterns* parentheses.
+We have already set up an url pattern to forward everything starting with
+*recipes/* to the python module *recipes.urls*, and now everything starting
+with "admin" will redirect to the admin interface we will soon take a closer
+look at.
 
-It should look similar to::
+If you refresh your browser at this time, you will get an error about your site
+being improperly configured. The error message suggests that you should put
+``django.contrib.admin`` in the INSTALLED_APPS section of settings.py. It is
+already there, you just need to uncomment it:
 
-    from django.conf.urls import patterns, url
+Now, have a look in your browser. No matter what address you go to, the server
+will not find it, and suggests you should try ``localhost:8000/admin/``.
 
-    urlpatterns = patterns('',
-                           )
+(Pic: go to admin)
 
-To let the admin interface administer your Food model, define an admin.py in the app folder containing::
+You should now be able to log in and have a look around. You should see some
+predefined classes from Django like User and Group, but Admin can also take
+care of your Food model. To get that to work, you need to create a file in the
+app folder called "admin.py". The file should contain::
 
     from django.contrib import admin
     from recipes.models import Food
 
     admin.site.register(Food)
 
-In settings.py, find INSTALLED_APPS and uncomment the line
-``'django.contrib.admin',``.
+On browser refresh, nothing changes. When adding new models to admin, you need
+to restart the server. Just stop it (ctrl-c) and restart the runserver command.
 
-Now, have a look in your browser. It should tell you that you have set up some routes. One to *recipes* and one to *admin*. Try to append ``admin`` to the url.
+You should now be able to see your Food model in the list.  Click on it and add
+some food using the *Add food* button in the top right corner.
 
-You should now be able to log in and have a look around. You should see some predefined classes from Django like User and Group, but also your very own Food. Click on it and add some food using the *Add food* button in the top right corner.
+PIC: Admin
+
+You may now get an error complaining about missing tables. This is because you
+added the admin inteface after the last run of "syncdb", so the tables admin
+needs are not created. Just run syncdb again::
+
+    ./manage.py syncdb --migrate
 
 Adding a method to your model
 -----------------------------
 
-When looking at the list, you see that you have created a *Food object*. When you have created more, this is not so useful. In your models.py add a function named ``__unicode__`` to your Food class. Make it to return self.name, like this::
+When you have successfully created a few kinds of food, you see in the list
+that you have created multiple records of *Food object*. It is not possible to
+distinguish between the records in the list. In your models.py add a function
+named ``__unicode__`` to your Food class. Make it to return self.name, like
+this::
 
     def __unicode__(self):
         return self.name
 
 When refreshing the list, your table should look more useful. The __unicode__
 is utilized by Django to write a human readable version of the object. Later,
-for example in templates, you could just print the object, instead of
-specifying what fields you want to print each time, you can let the __unicode__
-do the magic.
+for example in templates, you could just print the object without saying what
+parts of the object you want to print, and let the __unicode__ do the magic.
 
-Your first view
----------------
+Your first view: Food list
+==========================
+
+Admin does everything nice and tidy, but you don't want to expose the admin
+inteface to your users. We have to create a simpler version of this ourself.
 
 Open up ``views.py`` and paste in this code::
 
@@ -306,15 +443,14 @@ And a line to the pattern list to get all food::
 
     url(r'^food/$', food_list, name='food-list'),
 
+Now ``/recipes/food/`` should trigger the newly created ``food_list`` function. Go to this address and see what you get.
 
-Adding a template
------------------
+Bootstrapping a template
+------------------------
 
-Now ``/recipes/food/`` should trigger the newly created ``food_list`` function.
-
-Try it and see that you get an error message. It tells you to make a template
-named "recipes/food_list.html". We will make this template in the app level (to
-keep away from configuring too much in the settings file)::
+You got an error message. It tells you to make a template named
+"recipes/food_list.html". We will make this template in a templates/recipes
+inside the app folder. Create the folders::
 
     mkdir -p templates/recipes  # from the app folder
 
@@ -347,9 +483,15 @@ directory to ``static``::
     mv bootstrap static
 
 Have a look at the file structure there and compare to the explanations at
-http://twitter.github.com/bootstrap/getting-started.html.
+http://twitter.github.com/bootstrap/getting-started.html. It should be alright.
 
-Head over to the web browser and see the page saying Hello, world!. Add a *div* tag with class *container* around the *h1* and see how the page changes. Change the template by changing the *h1* tag and the title, and add some contents after the h1::
+You need to stop and start the server again, as the new templates folder is
+only picked up at server start.
+
+Head over to the web browser and see the page saying "Hello, world!". Add a
+*div* tag with class *container* around the *h1* and see how the page changes.
+Change the template by changing the *h1* tag and the title, and add some
+contents after the *h1*::
 
     <ul>
     {% for object in object_list %}
@@ -357,9 +499,10 @@ Head over to the web browser and see the page saying Hello, world!. Add a *div* 
     {% endfor %}
     </ul>
 
-Now, add empty links (a href="") around the {{ object }}. We want to see some
-details about the food we have created. Also add an empty link at the bottom
-that will later be used for adding more food to our list.
+Refresh your browser and see, then add empty links (a href="") around the {{
+object }}. We want to see some details about the food we have created. Also add
+an empty link at the bottom that will later be used for adding more food to our
+list.
 
 A second view
 -------------
@@ -1009,7 +1152,9 @@ You do not have an easy way to go between the recipe section and the food
 section of your website. What about using a fancy top menu from Twitter
 Bootstrap http://twitter.github.com/bootstrap/components.html#navbar? In
 "base.html" template (one level up from the other templates), add a this inside
-the "container" div, before the "content" block::
+the "container" div, before the "content" block:
+
+.. code-block:: html
 
     <div class="navbar">
         <div class="navbar-inner">
