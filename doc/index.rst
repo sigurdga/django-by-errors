@@ -3,9 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-############################################
-Django by errors - different Django tutorial
-############################################
+##############################################
+Django by errors - a different Django tutorial
+##############################################
 
 ************
 Introduction
@@ -504,12 +504,15 @@ object }}. We want to see some details about the food we have created. Also add
 an empty link at the bottom that will later be used for adding more food to our
 list.
 
-A second view
+A better view
 -------------
 
-It shouldn't be much harder than the first one. But first, we will change the first view to be a **Class based generic view**.
+The view function we made give us full control over what happens, but is long,
+and you will end up with quite a few very similar view functions. To make sure
+you *don't repeat yourself* too much, you can use the newer "Class based generic
+view"s.
 
-The rewritten view file should look like::
+Remove the file contents and insert this instead::
 
     from recipes.models import Food
     from django.views.generic import ListView
@@ -525,47 +528,67 @@ the pattern should be changed to this::
 Here, instead of calling the view function directly, we are now calling the
 ``as_view`` function on the FoodListView class.
 
-Have a look in the browser. The functionality is the same, the code a lot
+Have a look in the browser. The functionality is the same, the code a bit
 shorter.
 
-Now we will make that second view. To the django.views import statement, add ``DetailView`` (comma separated), and add another class at the bottom of the file::
+Your second view: Food details
+==============================
+
+In the views.py, append ``DetailView`` (comma separated) to the *django.views*
+import statement at the top, and add another class at the bottom of the file::
 
     class FoodDetailView(DetailView):
         model = Food
 
-Add another pattern to the urls.py::
+Add another pattern to the urls.py, and remember to import it at the top::
 
     url(r'^food/(?P<pk>\d+)/$', FoodDetailView.as_view(), name='food-detail'),
 
-And now, insert the url you need into the address field of the first template,
-so the line becomes::
+You see that the last parameter is "name". This is used to alias the possibly
+long and ugly urls full of parameters to nice little strings. Another good
+thing about this is that we can change the format of your urls without updating
+all the places where it is used. This concept is called "named urls" in Django,
+and this way, the url patterns are used both for url pattern matching *and*
+link url generation.
+
+Insert the name of the url you need into the address field of your
+first template, so the line becomes::
 
     <li><a href="{% url food-detail object.id %}">{{ object }}</a></li>
 
-Here we are utilizing the *named url* concept. You probably noticed the last
-parameter in the url patterns. Also, the url patterns take in parameters. The
-``<pk>`` is a generic way to say that you want the primary key field of the
-object. The url patterns are used for both matching *and* link generation.
+Also, the url patterns can take in parameters. The ``<pk>`` part of the pattern
+says that you want to match the primary key field of the object. The primary
+key field is for all common cases the hidden auto-incremented numerical *id*.
+That is why we send in the ``object.id`` when using this to create the url. The
+other common way to address objects is to use a "slug", and we will have a look
+at that further down this document.
 
 When you have a look at the web browser now, you see by hovering the mouse over
 the links that they point somewhere. By clicking one of them, you will see we
 need to make another template. *templates/food_detail.html* is missing.
 
+PIC: missing recipes/food_detail.html
+
 Copy the template you already have to ``food_detail.html`` in the same folder.
-Change the new template to add a new title, h1 and the contents itself. The
-contents is not too much fun as we do only have one field in the Food model.
-Add a few <p> with the object id and name, and a link back to the list, like
-this::
+Change the new template to add a new *title*, *h1* and the *contents* itself.
+The contents is not too much fun as we do only have one field in the Food
+model.  Add a few ``<p>``-tags with the object id and name, and a link back to
+the list, like this::
 
     <p><a href="{% url food-list %}">Back to food list</a></p>
 
     <p>{{ object.id }}</p>
     <p>{{ object.name }}</p>
 
-Don't repeat yourself
----------------------
+You can be happy if the detailed page looks something like this when you
+refresh the browser.
 
-When you look at the two templates, you see that there is a lot of common code in them. Create a new template one folder level up called ``base.html`` with the common code, like this::
+Don't repeat yourself: Use a common base
+----------------------------------------
+
+When you look at the two templates, you see that there is a lot of common code
+in them. Not good. Create a new template *one folder level up* called
+"base.html" with the common code, like this::
 
     <!DOCTYPE html>
     <html>
@@ -588,9 +611,13 @@ When you look at the two templates, you see that there is a lot of common code i
     </body>
     </html>
 
-You see some placeholder text in there, inside some blocks ``{% block content %}``. Blocks are made to be overridden in templates extending them.
+You see some placeholder text in there, inside some blocks ``{% block content
+%}``. Blocks are made to be overridden in templates extending them.
 
-Now remove the common code from the other two templates and add a line to tell them to extend the new base template. Then override the two blocks, title and content in both templates. The list template now looks like this::
+Now remove the common code from the other two templates and add a line at the
+top to tell them to **extend** the new base template. Then override the two
+blocks, title and content in both templates. The list template now looks like
+this::
 
     {% extends "base.html" %}
 
@@ -603,15 +630,20 @@ Now remove the common code from the other two templates and add a line to tell t
     <li><a href="{% url food-detail object.id %}">{{ object }}</a></li>
     {% endfor %}
     </ul>
-    <a href="{% url food-create %}" class="btn btn-primary">Add new</a>
     {% endblock %}
 
-A view to create objects
-------------------------
+Now, the browser should look exactly the same for the two views. If you see the
+generic text of the base, then you do not override the blocks using the same
+names.
 
-You already have a *create* link in the list page, now we'll add the
-functionality. Add a CreateView to the import at the top of views.py, and
-create a new view like::
+Create more objects
+===================
+
+Add a link to the food list page with the text "Add food", and with an empty
+link (to be updated later).
+
+Append CreateView to the django.views import at the top of views.py, and create
+a new view like::
 
     class FoodCreateView(CreateView):
         model = Food
@@ -620,11 +652,17 @@ In the urls.py, add the new FoodCreateView to the import at the top, and add a n
 
     url(r'^food/new/', FoodCreateView.as_view(), name='food-create'),
 
-Now you can update the create link in the list template to use the new and named ``food-create``.
+Now you can update the create link in the list template to use the new and named ``food-create``, like this::
 
-Clicking the new link will also give an error about a missing template. Create
-the missing *food_form.html*. It will look very similar to the other two
-templates, but with a form in it::
+    <a href="{% url food-create %}">Add food</a>
+
+Clicking the new link will also give an error about a missing template.
+
+PIC: Missing recipes/food_form.html
+
+The error message tells us that "recipes/food_form.html" is missing. Create it
+and make it look similar to the other two templates, but we will add a form to
+it::
 
     {% extends "base.html" %}
 
@@ -634,14 +672,29 @@ templates, but with a form in it::
     <h1>Add food</h1>
 
     <form>
-    {{ form }}
-    <button type="submit">Save</button>
+        {{ form }}
+        <button type="submit">Save</button>
     </form>
     {% endblock %}
 
-Have a look at the form in the browser. Ok? Then add ``class="btn
-btn-primary"`` to the submit button. Looks better? This is because of the
-styling we get from Twitter Bootstrap.
+We haven't added any action or method parameters to the form at this time. The
+``{{ form }}`` tag will let Django show the fields that represent the models.
+And we also have a standard submit button. Have a look at the form in the
+browser.
+
+PIC simple food form
+
+Primary action button
+---------------------
+
+To make it slightly nicer, add a ``class="btn btn-primary"`` to the submit
+button. Looks better? This is because of the styling we get from Twitter
+Bootstrap.
+
+###HER
+
+A more crispy form
+------------------
 
 We will also make the form layout a bit nicer with the third party **Crispy
 Forms** module. To INSTALLED_APPS add ``crispy_forms`` and install
@@ -655,6 +708,9 @@ Below the extends line in the form, add::
 
 And add the ``crispy`` filter to the form variable. Not the best example with
 only one variable in the form.
+
+Making the form post
+--------------------
 
 Now, add a fruit name and click "Save". The url changes, but you are still on the same page. Our Django view will answer differently on GET and POST requests, but we did not tell the form to use the http POST method. Change the form definition to use the POST method::
 
