@@ -80,31 +80,34 @@ Find a place where you want your project, and create a virtual environment to
 keep your requirements and dependencies separated from the rest of your python
 system. And activate your new virtual environment::
 
-    virtualenv --no-site-packages .
-    source bin/activate
+    virtualenv --no-site-packages env
+    source env/bin/activate
 
-You are now "inside" this virtual environment. You can type "deactivate" to get out of it. But be sure to be inside when installing Django::
+You are now "inside" this virtual environment. You can type "deactivate" to get
+out of it. But be sure to be inside when installing Django::
 
     pip install django
 
-Now that Django is installed you have a new command inside the "bin" folder, which you can use to start a new Django project. I have named mine "recipes-project"::
+Now that Django is installed you have a new command inside the "bin" folder in env,
+which you can use to start a new Django project. I have named mine
+"recipes-project"::
 
-    ./bin/django-admin.py startproject recipes_project
+    ./env/bin/django-admin.py startproject recipes_project
 
 Go into the **project folder**, make the ``manage.py`` script runnable and
 start the *built-in webserver*::
 
     cd recipes_project
-    chmod 755 manage.py
-    ./manage.py runserver
+    python manage.py runserver
 
-Now go to ``localhost:8000`` in your web browser. It says "Welcome to Django",
-and tells you about your next steps: you should update your database settings
-and create an **app**.  The apps are meant to be *reusable* components that you
-can tie together when building projects.
+Now go to ``localhost:8000`` in your web browser.  You can stop the server by
+pressing ``ctrl-c`` as suggested by the command output.
 
-You can stop the server by pressing *ctrl-c* as suggested by the command
-output.
+.. image:: it_worked.png
+
+The page congratulates you, and tells you about your next steps: you should
+update your database settings and create an **app**.  The apps are meant to be
+*reusable* components that you can tie together when building projects.
 
 Have a look around in your project folder. You will see a folder with the same
 name as your project, *recipes_project*. This is where central project configuration
@@ -129,15 +132,15 @@ Database setup
 --------------
 
 The welcoming page told us to setup the database. The database settings are
-part of the settings.py file in the configuration folder. Open up
-*recipes_project/settings.py* in your favourite text editor, and change the
-database settings: Append ``sqlite3`` to the ENGINE field and add a database
-name to the NAME field, "data.db" is a good name::
+part of the *settings.py* file in the configuration folder. Open up
+``recipes_project/settings.py`` in your favourite text editor, and change the
+database settings: Append ``sqlite3`` to the ``ENGINE`` field and add a database
+name to the NAME field, "database.db" is a good name::
 
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'data.db',
+            'NAME': 'database.db',
             'USER': '',
             'PASSWORD': '',
             'HOST': '',
@@ -147,8 +150,7 @@ name to the NAME field, "data.db" is a good name::
 
 The database name will be the name of a local file in your project folder.
 Sqlite is a single-file database system that is easy to use when developing,
-but not usable in a large system. I have take out the comments to get this
-fitted in the documentation.
+but not recommended in a production for large sites.
 
 Creating an app
 ===============
@@ -156,17 +158,17 @@ Creating an app
 The welcoming page also wanted you to create an app. Do this using the
 ``manage.py`` command in the project folder::
 
-    ./manage.py startapp recipes
+    python manage.py startapp recipes
 
 This will create a new folder structure for the new app besides "manage.py" and the inner "recipes_project", like this::
 
     $ ls
     manage.py  recipes  recipes_project
 
-And the new folder contains this::
+And the new *recipes* folder contains this::
 
     $ ls recipes
-    __init__.py  __init__.pyc  models.py  models.pyc  tests.py  views.py
+    __init__.py  models.py  tests.py  views.py
 
 Activating the app
 ------------------
@@ -191,29 +193,29 @@ should look something like::
 
 The extra comma at the end is optional on the last line, but I recommend it.
 
-Now, to route traffic to the new app, we also need to add a line to the list of
-url patterns Django will use to match incoming requests. In the project level
-urls.py, you will see a line like this::
+Now, to route traffic to the newly created app, we also need to add a line to
+the list of url patterns Django will use to match incoming requests. In the
+project level ``urls.py``, you will see a line like this::
 
     # url(r'^recipes_project/', include('recipes_project.foo.urls')),
 
-The code with "#" is "commented out" and will not run. To make it active,
-remove the "#" and the first space. We will also change the line itself so it
-reads::
+The code with "#" in front is "commented out" and will not run. To make it
+active, remove the "#" and the first space. We will also change the line itself
+so it reads::
 
     url(r'^recipes/', include('recipes.urls')),
 
-It is useful to keep a terminal always running ``./manage.py runserver``, and
+It is useful to keep a terminal always running ``python manage.py runserver``, and
 use another terminal window or tab for all the other commands you need to run.
 
-Refresh the browser and see that complains: "No module named recipes.urls"
+Refresh the browser and see that complains: "No module named urls"
 
-    PIC
+.. image:: no_module_named_urls.png
 
 The line we just activated tells Django to look for url patterns in a file at
-"recipes/urls.py". That file does not exist yet. Copy the urls.py from the
+"recipes/urls.py", but that file does not exist yet. Copy the urls.py from the
 project folder into the app folder, and remove all the commented code and url
-patterns so that it looks like this::
+patterns so that the new file looks like this::
 
     from django.conf.urls import patterns, include, url
 
@@ -224,27 +226,22 @@ Go to the browser and refresh. Now it says "Page not found (404)" which is a
 generic error message about a page not being found, but this also tells you
 what alternatives you have.
 
-    (PIC 404)
+.. image:: page_not_found.png
 
 The page suggests that you should append "recipes/" to the address field of
-your browser. Go ahead, try it, and see that you get the first "It worked!"
+your browser.  Go ahead, try it, and see that you get the first "It worked!"
 page again as there were no errors, but also, no contents.
 
-
-Now it complains about a *urlconf* without patterns. We have told Django that
-our app should handle these urls, but we have do not have any views to show,
-and therefore no urls pointing to these views. It's time to take a break and
-think about the models of our application.
 
 ***************************
 Models, views and templates
 ***************************
 
 There are different ways to organize code so it will not end up as a pile of
-spaghetti.  Have a look again in the *app* folder, you'll see four files ending
-in '.py'. The *__init__* is needed for the Python module that the app is to
-work, *models* will contain your models, *tests* will contain your tests, and
-*views* is the code that will build up different "pages"::
+spaghetti.  Have a look again in the recipes *app* folder, you'll see four
+files ending in '.py'. The *__init__* is needed for the Python module that the
+app is to work, *models* will contain your models, *tests* will contain your
+tests, and *views* is the code that will build up different "pages"::
 
     $ ls recipes
     __init__.py   models.py   tests.py  urls.pyc
