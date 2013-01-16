@@ -27,9 +27,13 @@ and Twitter Bootstrap for a nice default site styling.
 About Django
 ============
 
-Django (REF) is a web application framework written in Python (REF). As Python,
-it is Free software, licenced under the BSD licence (REF), and it has lots of
-documentation and a large community (REF) around.
+`Django`_ is a web application framework written in `Python`_. As Python,
+it is Free software, licenced under the `BSD license`_, and it has lots of
+documentation and a large community.
+
+.. _Django: https://www.djangoproject.com/
+.. _Python: http://www.python.org/
+.. _BSD license: http://en.wikipedia.org/wiki/BSD_licenses
 
 Django fosters **rapid development**, using an easy-to-learn and easy-to-read
 language like Python will let you not only make the computer understand what
@@ -65,7 +69,9 @@ terminal, write "python" and press enter. If the command was not found, you
 should install Python.
 
 We will also use "virtualenv". It should not be too hard to install, just check
-out their official installation documentation.
+out their official `installation documentation`_.
+
+.. _installation documentation: http://www.virtualenv.org/en/latest/#installation
 
 Starting a project
 ==================
@@ -457,7 +463,9 @@ inside the app folder. Create the folders::
 And create a file in the newly created folder called ``food_list.html``
 containing (copied from
 http://twitter.github.com/bootstrap/getting-started.html and changed to get
-static media from Django's locations)::
+static media from Django's locations):
+
+.. code-block:: html+django
 
     <!DOCTYPE html>
     <html>
@@ -491,7 +499,9 @@ only picked up at server start.
 Head over to the web browser and see the page saying "Hello, world!". Add a
 *div* tag with class *container* around the *h1* and see how the page changes.
 Change the template by changing the *h1* tag and the title, and add some
-contents after the *h1*::
+contents after the *h1*:
+
+.. code-block:: html+django
 
     <ul>
     {% for object in object_list %}
@@ -552,7 +562,9 @@ and this way, the url patterns are used both for url pattern matching *and*
 link url generation.
 
 Insert the name of the url you need into the address field of your
-first template, so the line becomes::
+first template, so the line becomes:
+
+.. code-block:: html+django
 
     <li><a href="{% url food-detail object.id %}">{{ object }}</a></li>
 
@@ -560,7 +572,7 @@ Also, the url patterns can take in parameters. The ``<pk>`` part of the pattern
 says that you want to match the primary key field of the object. The primary
 key field is for all common cases the hidden auto-incremented numerical *id*.
 That is why we send in the ``object.id`` when using this to create the url. The
-other common way to address objects is to use a "slug", and we will have a look
+other common way to address objects is to use a *slug*, and we will have a look
 at that further down this document.
 
 When you have a look at the web browser now, you see by hovering the mouse over
@@ -573,7 +585,9 @@ Copy the template you already have to ``food_detail.html`` in the same folder.
 Change the new template to add a new *title*, *h1* and the *contents* itself.
 The contents is not too much fun as we do only have one field in the Food
 model.  Add a few ``<p>``-tags with the object id and name, and a link back to
-the list, like this::
+the list, like this:
+
+.. code-block:: html+django
 
     <p><a href="{% url food-list %}">Back to food list</a></p>
 
@@ -588,7 +602,9 @@ Don't repeat yourself: Use a common base
 
 When you look at the two templates, you see that there is a lot of common code
 in them. Not good. Create a new template *one folder level up* called
-"base.html" with the common code, like this::
+"base.html" with the common code, like this:
+
+.. code-block:: html+django
 
     <!DOCTYPE html>
     <html>
@@ -648,11 +664,13 @@ a new view like::
     class FoodCreateView(CreateView):
         model = Food
 
-In the urls.py, add the new FoodCreateView to the import at the top, and add a new url pattern::
+In the urls.py, add the new FoodCreateView to the import at the top, and add a
+new url pattern::
 
     url(r'^food/new/', FoodCreateView.as_view(), name='food-create'),
 
-Now you can update the create link in the list template to use the new and named ``food-create``, like this::
+Now you can update the create link in the list template to use the new and
+named ``food-create``, like this::
 
     <a href="{% url food-create %}">Add food</a>
 
@@ -772,7 +790,7 @@ measurement, as "1 milk" is not so useful.
 We will first define the Recipe model. It will have a title, a description of
 unknown length, and a unicode method as we have already seen. But wouldn't it
 be nice to have a nice looking url? From the news paper agencies (where Django
-was first created), we have gotten *slug*s, readable parts of a url that will
+was first created), we have gotten *slug*\ s, readable parts of a url that will
 be used to identify an object. We will add a slug field that will hold a nice
 urlized version of the object's title::
 
@@ -784,7 +802,8 @@ urlized version of the object's title::
         def __unicode__(self):
             return self.title
 
-To connect the Recipe to the Food, we create a table to hold the references as well as the measurement fields::
+To connect the Recipe to the Food, we create a table to hold the references as
+well as the measurement fields::
 
     class Ingredient(models.Model):
         recipe = models.ForeignKey(Recipe)
