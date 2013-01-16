@@ -621,48 +621,61 @@ version of it.
 Your second view: Food details
 ==============================
 
-In the views.py, append ``DetailView`` (comma separated) to the *django.views*
-import statement at the top, and add another class at the bottom of the file::
+We want to get up a page for each food object, that may in the future list more
+details.  In the *views.py*, append ``DetailView`` (comma separated) to the
+*django.views* import statement at the top, and add another class at the bottom
+of the file::
 
     class FoodDetailView(DetailView):
         model = Food
 
-Add another pattern to the urls.py, and remember to import it at the top::
+Add another pattern to the *urls.py* of the app, and remember to import
+FoodDetailView at the top (the same way as you imported DetailView above)::
 
-    url(r'^food/(?P<pk>\d+)/$', FoodDetailView.as_view(), name='food-detail'),
+    url(r'^food/(?P<pk>\d+)$', FoodDetailView.as_view(), name='food-detail'),
 
-You see that the last parameter is "name". This is used to alias the possibly
-long and ugly urls full of parameters to nice little strings. Another good
-thing about this is that we can change the format of your urls without updating
-all the places where it is used. This concept is called "named urls" in Django,
-and this way, the url patterns are used both for url pattern matching *and*
-link url generation.
+The ``<pk>`` part of the pattern says that you want to match the primary key
+field of the object. The primary key field is for all common cases the hidden
+auto-incremented numerical *id*. When this url pattern is matched to an
+incoming url, we have a match if the incoming url starts with the ``recipes/``
+of the app, defined in the project's urls.py, then the next part has to be
+``food/`` as defined here, and it has to *end with a number*. If we have a
+match, Django will run the inherited ``as_view`` function of the
+FoodDetailsView model, fetching the database record matching the incoming
+integer to the Food table's primary key.
 
-Insert the name of the url you need into the address field of your
-first template, so the line becomes:
+You see that the last parameter is "name". This is a short name to use when
+refering to links that may be long and have a lot of parameters. Another good
+thing about this is that we can change the urls without updating all the places
+where they are used. This concept is called *named urls* in Django, and this
+way, the url patterns are used both for **url pattern matching** *and* **link
+url generation**.
+
+In the template we created some moments ago, insert the name of the url you
+need into the address field, so that the line becomes:
 
 .. code-block:: html+django
 
     <li><a href="{% url food-detail object.id %}">{{ object }}</a></li>
 
-Also, the url patterns can take in parameters. The ``<pk>`` part of the pattern
-says that you want to match the primary key field of the object. The primary
-key field is for all common cases the hidden auto-incremented numerical *id*.
-That is why we send in the ``object.id`` when using this to create the url. The
-other common way to address objects is to use a *slug*, and we will have a look
-at that further down this document.
+Here we send in object.id (the hidden primary key of the object), so that when
+it is clicked, it will get used the other way, as described above.
 
 When you have a look at the web browser now, you see by hovering the mouse over
 the links that they point somewhere. By clicking one of them, you will see we
 need to make another template. *templates/food_detail.html* is missing.
 
-PIC: missing recipes/food_detail.html
+.. image:: food_detail_template_missing.png
 
-Copy the template you already have to ``food_detail.html`` in the same folder.
-Change the new template to add a new *title*, *h1* and the *contents* itself.
+In the innermost template folder, copy the template you already have to
+``food_detail.html`` in the same folder.  Change the new template to add a new
+*title*, *h1* and the *contents* itself.  In the title and h1, you can use {{
+object }}.  This will make use of the already utilized
+``__unicode__``-function.
+
 The contents is not too much fun as we do only have one field in the Food
-model.  Add a few ``<p>``-tags with the object id and name, and a link back to
-the list, like this:
+model, and the normally hidden *id*.  Add a few ``<p>``-tags with the object id
+and name, and a link back to the list, using the *named url*, like this:
 
 .. code-block:: html+django
 
@@ -672,14 +685,18 @@ the list, like this:
     <p>{{ object.name }}</p>
 
 You can be happy if the detailed page looks something like this when you
-refresh the browser.
+refresh the browser:
+
+.. image:: food_detail.png
 
 Don't repeat yourself: Use a common base
 ----------------------------------------
 
 When you look at the two templates, you see that there is a lot of common code
-in them. Not good. Create a new template *one folder level up* called
-"base.html" with the common code, like this:
+in them. Adding even more templates, the contents will become unorganized and
+at last not look consistent. Not good. Create a new template *one folder level
+up*, relative to the two you have, called "base.html" with the common code,
+like this:
 
 .. code-block:: html+django
 
@@ -705,12 +722,16 @@ in them. Not good. Create a new template *one folder level up* called
     </html>
 
 You see some placeholder text in there, inside some blocks ``{% block content
-%}``. Blocks are made to be overridden in templates extending them.
+%}``. Blocks are made to be overridden in the templates extending them, so we
+will only see this placeholder text if we forget to override the blocks in the
+other templates.
 
 Now remove the common code from the other two templates and add a line at the
 top to tell them to **extend** the new base template. Then override the two
 blocks, title and content in both templates. The list template now looks like
-this::
+this:
+
+.. code-block:: html+django
 
     {% extends "base.html" %}
 
@@ -723,6 +744,8 @@ this::
     <li><a href="{% url food-detail object.id %}">{{ object }}</a></li>
     {% endfor %}
     </ul>
+
+    <a href="">Add food</a>
     {% endblock %}
 
 Now, the browser should look exactly the same for the two views. If you see the
@@ -732,32 +755,38 @@ names.
 Create more objects
 ===================
 
-Add a link to the food list page with the text "Add food", and with an empty
-link (to be updated later).
-
-Append CreateView to the django.views import at the top of views.py, and create
-a new view like::
+Append ``CreateView`` to the django.views import at the top of *views.py*, and
+create a new view like::
 
     class FoodCreateView(CreateView):
-        model = Food
+        model = FoodCreateView
 
-In the urls.py, add the new FoodCreateView to the import at the top, and add a
+In the *urls.py*, add the new FoodCreateView to the import at the top, and add a
 new url pattern::
 
-    url(r'^food/new/', FoodCreateView.as_view(), name='food-create'),
+    url(r'^food/create$', FoodCreateView.as_view(), name='food-create'),
+
+It is good practice to have the more specific patterns above the patterns that
+tries to match url input. If the food details url was set up to take a word
+instead of a number as a parameter, it would also match "create" and would be
+trying to fetch a food object named "create".
 
 Now you can update the create link in the list template to use the new and
-named ``food-create``, like this::
+named ``food-create``, like this:
+
+.. code-block:: html+django
 
     <a href="{% url food-create %}">Add food</a>
 
 Clicking the new link will also give an error about a missing template.
 
-PIC: Missing recipes/food_form.html
+.. image:: food_create_view_missing.png
 
 The error message tells us that "recipes/food_form.html" is missing. Create it
-and make it look similar to the other two templates, but we will add a form to
-it::
+and make it look similar to the other two templates, but with a form added to
+it:
+
+.. code-block:: html+django
 
     {% extends "base.html" %}
 
@@ -777,7 +806,9 @@ We haven't added any action or method parameters to the form at this time. The
 And we also have a standard submit button. Have a look at the form in the
 browser.
 
-PIC simple food form
+.. image:: food_create_boring.png
+
+OK, but we can do better…
 
 Primary action button
 ---------------------
@@ -786,46 +817,72 @@ To make it slightly nicer, add a ``class="btn btn-primary"`` to the submit
 button. Looks better? This is because of the styling we get from Twitter
 Bootstrap.
 
-###HER
+.. image:: food_create_blue_button.png
 
 A more crispy form
 ------------------
 
 We will also make the form layout a bit nicer with the third party **Crispy
-Forms** module. To INSTALLED_APPS add ``crispy_forms`` and install
-django-crispy-forms with pip::
+Forms** module. This will help us by adding useful `CSS`_ classes that will be
+styled by the bootstrap css rules. To INSTALLED_APPS in *setup.py*, add
+``crispy_forms`` and install django-crispy-forms with pip::
 
     pip install django-crispy-forms
 
-Below the extends line in the form, add::
+Below the extends line in the food_form template, add:
+
+.. code-block:: html+django
 
     {% load crispy_forms_tags %}
 
-And add the ``crispy`` filter to the form variable. Not the best example with
-only one variable in the form.
+And add the ``crispy`` filter to the form variable, like this:
+
+.. code-block:: html+django
+
+    <form>
+        {{ form|crispy }}
+        <button class="btn btn-primary" type="submit">Save</button>
+    </form>
+
+.. _CSS: http://en.wikipedia.org/Css
+
+.. image:: food_create_crispy.png
+
+It now looks good, but it won't work.
 
 Making the form post
 --------------------
 
-Now, add a fruit name and click "Save". The url changes, but you are still on the same page. Our Django view will answer differently on GET and POST requests, but we did not tell the form to use the http POST method. Change the form definition to use the POST method::
+Now, add a fruit name and click "Save". The url changes, but you are still on
+the same page. Our Django view will answer differently on GET and POST
+requests, but we did not tell the form to use the http POST method. Change the
+form definition to use the POST method:
+
+.. code-block:: html+django
 
     <form method="POST">
 
-If we try again, we will see another error, complaining about "Cross site
-request forgery". Django uses an established mechanism to decide that a request
-originates from the same site. This is done by using the ``SECRET`` in
+If we try again, we will see another error, complaining about "Forbidden: CSRF
+verification failed. Request aborted.". *Cross site request forgery* is a well
+established mechanism to used to decide that a request originates from the same
+site. This is done by using the randomly generated ``SECRET`` variable in
 settings.py to generate a combination of characters that will be attached as
 hidden fields to all forms, and then be validated on the servers when the form
 is posted. All you have to do is to add a ``{% csrf_token %}`` to your form.
-Add this e.g. at the same line as the form definition tag, like this::
+Add this e.g. at the same line as the form definition tag, like this:
+
+.. code-block:: html+django
 
     <form method="POST">{% csrf_token %}
 
-Now, try to save again. Another error! So much errors, so much to learn! This
-time Django complains about not knowing where to send you after the form has
-been parsed and your object saved. You would need to define either a
+Now, try to save again. Another error! So much errors, so much to learn!
+
+.. image:: no_url_to_redirect_to.png
+
+This time Django complains about not knowing where to send you after the form
+has been parsed and your object saved. You would need to define either a
 ``success_url`` in the view, to tell it where to go, or you can let Django go
-back to the detailed view for the object. This is kind of a default option, as
+back to the detailed view for the object. This is the default behaviour, as
 long as you have a ``get_absolute_url`` method defined in your model. Head over
 to models.py and add a method at the bottom of your Food class (on the same
 indentation level as ``__unicode__``)::
@@ -841,8 +898,17 @@ Now, go back and add a fruit and click save. Nice? If you now have two fruits
 with the same name, that is because your fruit got added even though your
 success link were missing.
 
+.. image:: two_of_the_same.png
+
 To be sure you will never register the same fruit twice, you can add
-``unique=True`` within the definition of ``name`` in your model class.
+``unique=True`` within the definition of ``name`` in your model class, so the
+changed definition get something like::
+
+    name = models.CharField(max_length=20, unique=True)
+
+If you now try to add a food object that has the same name as one previously created, you should see an error message like this:
+
+.. image:: food_with_this_name_already_exists.png
 
 Now you know how to add a model and some views to list, see details or add new
 objects.
