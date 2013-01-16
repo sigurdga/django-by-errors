@@ -247,9 +247,13 @@ tests, and *views* is the code that will build up different "pages"::
     __init__.py   models.py   tests.py  urls.pyc
     __init__.pyc  models.pyc  urls.py   views.py
 
-Later we will add *templates* as well: HTML (REF) code that will decide the layout and design of your pages. The templates folder is not created automatically as it is possible to put templates other places as well.
+Later we will add *templates* as well: `HTML`_ code that will decide the layout
+and design of your pages. The templates folder is not created automatically as
+it is possible to put templates other places as well.
 
-If you are coming from another language or framework, you will probably see
+.. _HTML: https://en.wikipedia.org/wiki/Html
+
+If you are coming from another language or framework, you will eventually see
 that the templates are stricter than you are used to. You are not allowed to
 put tons of functionality into the template code  A graphical designer should
 be able to understand and change the templates without knowing Python or
@@ -276,10 +280,12 @@ Set up database migration support
 ---------------------------------
 
 Database migrations let you script the database changes so you can go from one
-version to another without manually executing ``alter table`` or other sql
+version to another without manually executing ``alter table`` or other `SQL`_
 commands. You can also use this for data migrations, but we will not get into
 that now. You need a third party app called "South" to do this. There have been
 discussions about taking all or parts of South into the core of Django 
+
+.. _SQL: https://en.wikipedia.org/wiki/Sql
 
 In settings.py, add ``'south',`` to the bottom of the INSTALLED_APPS to use
 that app as well as your own. When saving the file, the running "runserver"
@@ -293,9 +299,10 @@ You need to install the "south" app::
 
 And restart your server.
 
-To create your first migration on the *recipes* app/module, run::
+To create your first migration belonging to the *recipes* app/module, run use
+the *init* subcommand::
 
-    ./manage.py schemamigration recipes --init
+    python manage.py schemamigration recipes --init
 
 This will only create the migration, not do anything to the database, as you
 can create more migrations and execute them at the same time. It will also
@@ -307,7 +314,7 @@ To actually run this command, you need to run the management command
 one with migrations defined). To do both *syncdb* and *migrate* at the same
 time, run::
 
-    ./manage.py syncdb --migrate
+    python manage.py syncdb --migrate
 
 The first time syncdb is run, it will ask you to create a user. We will soon be
 using the built-in admin interface where you later can create users, but to log
@@ -339,14 +346,13 @@ information. The output will look similar to this::
 
 The output from the syncdb command states that all apps specified in
 INSTALLED_APPS, except for your recipes, has been set up using the normal
-syncdb, and that your recipes app has been set up using a migration.
+syncdb, and that your recipes app has been set up using a migration. Good.
 
 Set up admin interface
 ----------------------
 
 Now we will utilize the built-in Django Admin. In ``urls.py`` in the project
-folder, uncomment the lines regarding *admin* (not admindoc).  Also make a new
-line to forward all urls starting with *recipes* to your app::
+folder, **uncomment** the lines regarding *admin*::
 
     from django.conf.urls import patterns, include, url
 
@@ -372,19 +378,24 @@ with "admin" will redirect to the admin interface we will soon take a closer
 look at.
 
 If you refresh your browser at this time, you will get an error about your site
-being improperly configured. The error message suggests that you should put
-``django.contrib.admin`` in the INSTALLED_APPS section of settings.py. It is
-already there, you just need to uncomment it:
+being improperly configured.
 
-Now, have a look in your browser. No matter what address you go to, the server
-will not find it, and suggests you should try ``localhost:8000/admin/``.
+.. image:: improperly_configured.png
 
-(Pic: go to admin)
+The error message suggests that you should put ``django.contrib.admin`` in the
+INSTALLED_APPS section of settings.py. It is already there, you just need to
+uncomment it.
+
+After uncommenting the admin app, have a look in your browser. No matter what
+address you go to, the server will not find it, and suggests you should try
+``localhost:8000/admin/``. Go there and have a look.
+
+.. image:: admin_login.png
 
 You should now be able to log in and have a look around. You should see some
 predefined classes from Django like User and Group, but Admin can also take
 care of your Food model. To get that to work, you need to create a file in the
-app folder called "admin.py". The file should contain::
+recipes folder called "admin.py". The file should contain::
 
     from django.contrib import admin
     from recipes.models import Food
@@ -394,41 +405,51 @@ app folder called "admin.py". The file should contain::
 On browser refresh, nothing changes. When adding new models to admin, you need
 to restart the server. Just stop it (ctrl-c) and restart the runserver command.
 
-You should now be able to see your Food model in the list.  Click on it and add
-some food using the *Add food* button in the top right corner.
+You should now be able to see your Food model in the list.  Click on it and try
+to add some food objects, like "Banana" or "Apple".
 
-PIC: Admin
+.. image:: no_admin_tables.png
 
-You may now get an error complaining about missing tables. This is because you
+You will now get an error complaining about missing tables. This is because you
 added the admin inteface after the last run of "syncdb", so the tables admin
-needs are not created. Just run syncdb again::
+needs are not created. Just run the same syncdb command again::
 
-    ./manage.py syncdb --migrate
+    python manage.py syncdb --migrate
+
+This time, the output also lists "django.contrib.admin" as a synced app.
 
 Adding a method to your model
 -----------------------------
 
-When you have successfully created a few kinds of food, you see in the list
-that you have created multiple records of *Food object*. It is not possible to
-distinguish between the records in the list. In your models.py add a function
-named ``__unicode__`` to your Food class. Make it to return self.name, like
-this::
+When you have successfully created a few kinds of food, you will see in the
+list that it list a few lines of *Food object*.
+
+.. image:: food_objects.png
+
+This is not very useful, as it is not possible to distinguish between the lines
+in the list. In your models.py add a function named ``__unicode__`` inside your
+Food class (at the same indentation level as the "name"). Make it return
+``self.name``, like this::
 
     def __unicode__(self):
         return self.name
 
-When refreshing the list, your table should look more useful. The __unicode__
-is utilized by Django to write a human readable version of the object. Later,
-for example in templates, you could just print the object without saying what
-parts of the object you want to print, and let the __unicode__ do the magic.
+When refreshing the list, your table should look more user friendly. The
+__unicode__ is utilized by Django to write a human readable version of the
+object. Later, for example in templates, you could just print the object
+without saying what parts of the object you want to print, and let the
+__unicode__ for that class decide.
+
+.. image:: user_friendly_food_objects.png
 
 Your first view: Food list
 ==========================
 
 Admin does everything nice and tidy, but you don't want to expose the admin
-inteface to your users. We have to create a simpler version of this ourself.
+inteface to your users. We have to create a simpler representation to show to
+our users.
 
-Open up ``views.py`` and paste in this code::
+Open up ``recipes/views.py`` and paste in this code::
 
     from django.shortcuts import render_to_response
     from django.template import RequestContext
@@ -438,6 +459,11 @@ Open up ``views.py`` and paste in this code::
         food = Food.objects.all()
         return render_to_response('recipes/food_list.html', {'object_list': food}, context_instance=RequestContext(request))
 
+The ``food_list`` method will fetch all ``Food`` objects from the database.
+Hold them in a variable named ``food``, and send this variable to a *template*
+named ``food_list.html``, but as a variable named ``object_list`` exposed to
+the template.
+
 Go to your app's urls.py and add an import statement to the top::
 
     from recipes.views import food_list
@@ -446,20 +472,25 @@ And a line to the pattern list to get all food::
 
     url(r'^food/$', food_list, name='food-list'),
 
-Now ``/recipes/food/`` should trigger the newly created ``food_list`` function. Go to this address and see what you get.
+Now ``/recipes/food/`` should trigger the newly created ``food_list`` function.
+Go to this address and see what you get.
+
+.. image:: food_template_does_not_exist.png
+
+You got an error message. It tells you to make a template named
+"recipes/food_list.html".
 
 Bootstrapping a template
 ------------------------
 
-You got an error message. It tells you to make a template named
-"recipes/food_list.html". We will make this template in a templates/recipes
-inside the app folder. Create the folders::
+We will make this template in a folder named "templates/recipes" inside the app
+folder. From inside the recipes folder, create the template folders::
 
-    mkdir -p templates/recipes  # from the app folder
+    mkdir -p templates/recipes
 
 And create a file in the newly created folder called ``food_list.html``
 containing (copied from
-http://twitter.github.com/bootstrap/getting-started.html and changed to get
+http://twitter.github.com/bootstrap/getting-started.html and changed to serve
 static media from Django's locations):
 
 .. code-block:: html+django
@@ -491,12 +522,16 @@ Have a look at the file structure there and compare to the explanations at
 http://twitter.github.com/bootstrap/getting-started.html. It should be alright.
 
 You need to stop and start the server again, as the new templates folder is
-only picked up at server start.
+only picked up at server restart.
 
-Head over to the web browser and see the page saying "Hello, world!". Add a
-*div* tag with class *container* around the *h1* and see how the page changes.
-Change the template by changing the *h1* tag and the title, and add some
-contents after the *h1*:
+Now, refresh the web browser and see the page saying "Hello, world!".
+
+Add a *div* tag with class *container* around the *h1* and see how the page
+changes.
+
+Change the template by changing the *h1* tag and the *title*, and after the *h1*
+(but inside the new div), print the contents of the ``object_list`` template
+variable we created above, like this:
 
 .. code-block:: html+django
 
@@ -506,20 +541,62 @@ contents after the *h1*:
     {% endfor %}
     </ul>
 
-Refresh your browser and see, then add empty links (a href="") around the {{
-object }}. We want to see some details about the food we have created. Also add
-an empty link at the bottom that will later be used for adding more food to our
-list.
+Refresh your browser and see. We want to see some details about the food we
+have created, but we do not know the addresses to these pages yet, so we will
+insert empty links (a href="") around the {{ object }}. Insert this instead of
+``{{ object }}``, (inside the *li*-tag):
 
-A better view
--------------
+.. code-block:: html+django
 
-The view function we made give us full control over what happens, but is long,
-and you will end up with quite a few very similar view functions. To make sure
-you *don't repeat yourself* too much, you can use the newer "Class based generic
-view"s.
+    <a href="">{{ object }}</a>
 
-Remove the file contents and insert this instead::
+Also add an empty link at the bottom of the page that will later be used for
+adding more food to our list.
+
+.. code-block:: html+django
+
+    <a href="">Add food</a>
+
+.. image:: food_list.png
+
+The template should now look similar to this:
+
+.. code-block:: html+django
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Food</title>
+    <!-- Bootstrap -->
+    <link href="{{ STATIC_URL }}css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+    <div class="container">
+        <h1>Food</h1>
+
+        <ul>
+        {% for object in object_list %}
+        <li><a href="">{{ object }}</a></li>
+        {% endfor %}
+        </ul>
+
+        <a href="">Add food</a>
+    </div>
+
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
+    </body>
+    </html>
+
+A simpler view
+--------------
+
+The view function we made earlier gives us full control over what happens. But
+it is long, and making a few of these requires a lot of typing. To make sure
+you *don't repeat yourself* too much, you can use the newer "Class based
+generic view"s instead.
+
+In *views.py*, remove the file contents and insert this instead::
 
     from recipes.models import Food
     from django.views.generic import ListView
@@ -533,10 +610,13 @@ the pattern should be changed to this::
     url(r'^food/$', FoodListView.as_view(), name='food-list'),
 
 Here, instead of calling the view function directly, we are now calling the
-``as_view`` function on the FoodListView class.
+``as_view`` function on the FoodListView class we just created. Our
+``FoodListView`` does not define this ``as_view()`` function, but inherits it
+from the ``ListView`` model class of the ``django.views.generic`` module.
 
 Have a look in the browser. The functionality is the same, the code a bit
-shorter.
+shorter. But you should know how to write this yourself as we did in the first
+version of it.
 
 Your second view: Food details
 ==============================
