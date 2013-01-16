@@ -920,22 +920,24 @@ To be able to create recipes, we need at least two more models. A recipe model
 is obvious, where we can add ingredients and a description of how to use the
 ingredients. But how do we connect the recipes to the food objects?
 
-Adding ManyToMany(REF) is too simple, then we only know what ingredients we
-use, but not how much of what. You can read about ManyToMany, and you should be
-able to understand how to do it after you have finished the next steps.
+There is a way to connect two models together in a very generic way. This is
+called a "many to many relation". In this case that would be too simple, as we
+need to add properties to the intermediate table. With `ManyToMany`_ we would
+be able to say what ingredients we need, but now how much of what ingredient we
+need in the recipe.
 
-# TODO: Add figure
+.. _ManyToMany: https://docs.djangoproject.com/en/dev/topics/db/examples/many_to_many/
 
 We need to say what Food object we will use, how much of it, and to what
 ingredient we want it added. When saying how much, we need to know the
-measurement, as "1 milk" is not so useful.
+measurement, as "1 salt" is not very useful.
 
 We will first define the Recipe model. It will have a title, a description of
-unknown length, and a unicode method as we have already seen. But wouldn't it
-be nice to have a nice looking url? From the news paper agencies (where Django
-was first created), we have gotten *slug*\ s, readable parts of a url that will
-be used to identify an object. We will add a slug field that will hold a nice
-urlized version of the object's title::
+unknown length, and a __unicode__ method as we have already seen. But wouldn't
+it be nice to have a nice looking url? From the news paper agencies (where
+Django was first created), we have gotten *slug*\ s: readable parts of a url
+that will be used to identify an object. We will add a slug field that will
+hold a nice *slugified* version of the object's title::
 
     class Recipe(models.Model):
         title = models.CharField(max_length=80)
@@ -954,14 +956,15 @@ well as the measurement fields::
         amount = models.DecimalField(decimal_places=2, max_digits=4)
         measurement = models.SmallIntegerField(choices=MEASUREMENT_CHOICES)
 
-We have *ForeignKey* fields that connects the Ingredient to a Food object and a
-Recipe object. The amount is defined as a DecimalField and the measurement as a
-SmallIntegerField. We could have created a table for all the different
-measurements available, but we want to see how to make predefined choices. The
-measurements will be saved as a number, but should be treated as a choice of
-strings all the way through the application. In the above model definition, we
-refer to ``MEASUREMENT_CHOICES`` which are not defined. Define some choices
-*above* the Ingredient model definition, like this::
+We have ``ForeignKey`` fields that connects the *Ingredient* to a *Food* object
+and a *Recipe object*. The *amount* is defined as a ``DecimalField`` and the
+*measurement* as a ``SmallIntegerField``. We could have created a table for all
+the different measurements available, but we want to see how to make
+*predefined choices*. The measurements will be saved as a number, but should be
+treated as a choice of strings all the way through the application. In the
+above model definition, we refer to ``MEASUREMENT_CHOICES`` which are not
+defined. Define some choices **above** the Ingredient model definition where it
+will be referred to::
 
     MEASUREMENT_CHOICES = (
         (1, "piece"),
@@ -974,24 +977,41 @@ refer to ``MEASUREMENT_CHOICES`` which are not defined. Define some choices
 Migrations, simple
 ------------------
 
-Now that we have defined new models, we should create and run a new migration as well. To create a new migration, run::
+Now that we have defined new models, we should create and run a new migration
+as well. To create a new migration, go up to the project level directory where
+*manage.py* is and run::
 
-    ./manage.py schemamigration --auto recipe
+    python manage.py schemamigration --auto recipes
 
 And run it with::
 
-    ./manage.py syncdb --migrate
+    python manage.py syncdb --migrate
+
+You may get into trouble here if you still have food objects with the same
+name. Head over to http://localhost:8000/admin/recipes/food/ and delete the
+duplicates. Then, try to run the *syncdb* command above again. If you now get an error about a table ``recipes_recipe`` already existing, you may need to run an SQL command manually to fix it, as stated by the top of the error message::
+
+    DROP TABLE "recipes_recipe"; DROP TABLE "recipes_ingredient";
+
+This is because sqlite3 is not a very good database backend, but as it is easy
+to develop with, and you do not have very important data in our development
+database, it is really no problem. Where to run that SQL command::
+
+    python manage.py dbshell
+
+Should give you access to the configured database shell. Exit by pressing ``ctrl-d``. **NOTE** that you should only do that if you got this error.
 
 Extending the admin inteface
 ----------------------------
 
-Register the two new models with the admin interface::
+Register the two new models with the admin interface, in ``recipes/admin.py``.
+(Do not forget to update the import statement)::
 
     admin.site.register(Recipe)
     admin.site.register(Ingredient)
 
 In the admin interface (at /admin), try to add a new recipe, e.g. *Pancakes*.
-Insert "Basic Pancakes" as the title and "basic-pancakes" as the slug. Try to
+Insert "My Pancakes" as the title and "my-pancakes" as the slug. Try to
 save without filling in the "description" field. Click *Save*. Form validations
 will not let you save this without filling in a description. Or telling the
 model that an empty description is OK, by adding ``blank=True`` to the
@@ -1002,7 +1022,7 @@ description field, like::
 That worked. Before adding ingredient objects, go back and add some more food
 objects, like "egg", "milk", "salt" and "wheat flour".
 
-And then, add a new ingredient object. Choose "Basic Pancakes", "Milk", "0.5"
+And then, add a new ingredient object. Choose "My Pancakes", "Milk", "0.5"
 and "liter" and save.
 
 We get redirected back to the Ingredient list, and see that we need to add a
@@ -1016,30 +1036,36 @@ Here, we output a number which may contain decimals for the amount, a string
 for the measurement and a string in parentheses for the recipe it belongs to.
 
 When refreshing the ingredient list page, you see that the ``%f`` gives a lot
-of unneeded decimals. Change this to ``%.2f`` to allow at most two decimals.
-(FIXME)
+of unneeded decimals. Change this to ``%.2g`` to allow at most two decimals.
 
-You also spot that the line does not print out the measurement, only the
+You also see that the line does not print out the measurement, only the
 numerical id. So change the ``self.measurement`` to
 ``self.get_measurement_display()`` to use a method that is dynamically
-available to fields with choices. (In documentation this is called
+available to fields with choices. (In the documentation this is called
 ``get_FIELD_display()``).
 
-But instead of using the object's string representation in a single cell in the
-table, you can define how to represent the object in the admin interface.
-Replace the Ingredient line in admin.py with this::
+Now we have been sort of exploiting the string representation of the object to
+make it look nice in the admin interface. But instead of using the object's
+string representation in a single cell in the table, you can define how to
+represent the object in the admin interface.  Replace the Ingredient line in
+admin.py with this::
 
     class IngredientAdmin(admin.ModelAdmin):
         list_display = ('food', 'amount', 'measurement', 'recipe')
 
-Here, you also see that the measurement is printed nicely.
+    admin.site.register(Ingredient, IngredientAdmin)
+
+Here, you also see that the measurement is listed using multiple columns.
 
 New views
----------
+=========
 
-Yes, everything looks nice in the admin interface, but it is not something we want do expose to our users. We need to get similar functionality in our own views.
+Now, everything looks nice in the admin interface, but we still do not want to
+expose it to the users. We need to get similar functionality in our own views.
 
-We want to list all recipes, so you should add a RecipeListView and a RecipeDetailView to views.py. You probably know how to do it now::
+We want to list all recipes, so you should add a RecipeListView and a
+RecipeDetailView to *views.py*. Import the Recipe model in the first line, and
+add two new views::
 
     class RecipeListView(ListView):
         model = Recipe
@@ -1047,23 +1073,30 @@ We want to list all recipes, so you should add a RecipeListView and a RecipeDeta
     class RecipeDetailView(DetailView):
         model = Recipe
 
-Create two new url pattern like this to the urls.py, and remember to do the
+Create two new url patterns like this to the *urls.py*, and remember to do the
 correct import at the top::
 
     url(r'^$', RecipeListView.as_view(), name='recipe-list'),
-    url(r'^(?P<slug>[-\w]+)/$', RecipeDetailView.as_view(), name='recipe-detail'),
+    url(r'^(?P<slug>[-\w]+)$', RecipeDetailView.as_view(), name='recipe-detail'),
 
 The first will match the address "/recipes/". The second will match "/recipes/"
-plus "a string containing numbers, letters, hyphen and underscore" plus "/".
-This is used to match the slug field we described earlier. The ``P<slug>``
-actually saves the value to a parameter named "slug", which is treated almost
-like an id internally by Django. Remember to import the new views from
-recipes.views.
+plus "a string containing numbers, letters, hyphens and underscores".  This is
+used to match the slug field we described earlier. The ``P<slug>`` actually
+saves the value to a parameter named "slug", which is treated almost like an id
+internally by Django.
 
 Now copy the template *food_list.html* to *recipe_list.html* in the same
-folder, and modify the new recipe list to be useful to list recipes. Also get the list to link to the recipe-detail url that you just created.
+folder, and modify the new recipe list to be useful to list recipes. Also get
+the list to link to the recipe-detail url that you just created:
 
-While you are at it, copy *food_detail.html* to *recipe_detail.html* and modify that as well. The contents could be something like::
+.. code-block:: html+django
+
+    {% url recipe-detail object.slug %}
+
+While you are at it, copy *food_detail.html* to *recipe_detail.html* and modify
+that as well. The contents could be something like:
+
+.. code-block:: html+django
 
     <h1>{{ object.title }}</h1>
 
@@ -1084,39 +1117,68 @@ Here you see how we can list out the ingredients of the recipe.
 You should now be able to navigate between the list and the detailed recipe(s).
 In the recipe_detail.html you just created, change the last line to add
 ``|default:"No description"`` to print out a default value when the description
-has not been added. In case you wonder, this is how it should look::
+has not been added. In case you wonder, this is how it should look:
+
+.. code-block:: html+django
 
     <p>{{ object.description|default:"No description" }}</p>
-
-We have just used our first *filter* (REF).
 
 Add recipes
 -----------
 
-Now, add a new view by doing it the other way around. Add a new link at the
-bottom of the recipe_list.html. Like this::
+Now, we will add a new view by doing it the other way around. Add or update the
+linke at the bottom of the recipe_list.html. Like this:
+
+.. code-block:: html+django
 
     <a href="{% url recipe-create %}" class="btn btn-primary">Add new</a>
 
-Here, we point to a url pattern called recipe-create, and if you try to view the recipe list now, you will get an error message telling you this, you are using a link that is not defined. So head over to urls.py and add recipe-create *before* the recipe-detail url (if you put it after, the recipe-detail will be reached first, and you will try to fetch a recipe called "new")::
+Here, we point to a url pattern called recipe-create, and if you try to view
+the recipe list now, you will get an error message telling you this, you are
+using a link that is not defined.
+
+.. image:: no-reverse-match-recipe-create.png
+
+So head over to urls.py and add ``recipe-create`` *before* the
+``recipe-detail`` url (if you put it after, the recipe-detail will be reached
+first, and you will try to fetch a recipe called "create")::
 
     url(r'^new/$', RecipeCreateView.as_view(), name='recipe-create'),
 
-If you try to view the recipe-list in the browser now, you will see an error message telling you that RecipeCreateView is not defined. Add the missing import line, try again, and you will get an error message telling you that it will not find RecipeCreteView in views.py. So, go ahead and create that simple function::
+If you try to view the recipe-list in the browser now, you will see an error
+message telling you that ``RecipeCreateView`` is not defined.
+
+.. image:: recipe-create-view-not-defined.png
+
+Add the missing import line, try again, and you will get an error message
+telling you that it cannot find ``RecipeCreteView`` in *views.py*.
+
+.. image:: cannot-import-name-recipecreateview.png
+
+So, go ahead and create that simple function::
 
     class RecipeCreateView(CreateView):
         model = Recipe
 
-Try it in your browser. Yes, we are once again see the error about a missing template. Even if this is a new template, the contents should look very familiar. You can copy food_form.html to recipe_form.html and do just a few modifications if you want to::
+Try it in your browser. Yes, we now have a nice button.
+
+.. image:: recipe-list.png
+
+If you try clicking that new button, you will once again see the error about a
+missing template. Even if this is a new template, the contents should look very
+familiar. You can copy food_form.html to recipe_form.html and do just a few
+modifications to get what you want:
+
+.. code-block:: html+django
 
     {% extends "base.html" %}
     {% load crispy_forms_tags %}
 
-    {% block title %}Recipe{% endblock %}
+    {% block title %}Add recipe{% endblock %}
 
     {% block content %}
 
-    <h1>Recipe</h1>
+    <h1>Add recipe</h1>
 
     <form method="post">
         {% csrf_token %}
@@ -1126,64 +1188,81 @@ Try it in your browser. Yes, we are once again see the error about a missing tem
 
     {% endblock %}
 
-Now, you should see something useful in your browser. Try create a simple
+Now, you should see something useful in your browser. Try to create a simple
 recipe, were you do not use too much time, as I now warn you that this will end
-in an error.  Yes, once again, Django complains about a missing *success_url* -
-it does not know where to send us after the object is created.
+in an error.  Yes, once again, Django complains about a missing ``success_url``
+- it does not know where to send us after the object is created.
 
-This, you have also already done already. Create a method in the Recipe model named ``get_aboslute_url`` that will return the recipe-detail url::
+.. image:: improperly_configured_recipes_create.png
+
+You have already done this. Create a method in the Recipe model named
+``get_aboslute_url`` that will return the recipe-detail url::
 
     @models.permalink
     def get_absolute_url(self):
         return ('recipe-detail', [self.slug])
 
-You see how we use include the slug when creating this url, as we need that to
+You see how we use include the *slug* when creating this url, as we need that to
 access the human readable url.
 
-Try to add another recipe, to see that everything is now working.
+Try to add another recipe, and see that everything is now working.
 
 Editing an object
 =================
 
 The way to edit an object is not too different from creating a new object. It
-is inf fact so similar that Django by default reuses the same template. As we
+is in fact so similar that Django by default reuses the same template. As we
 will see, one of the differences is how we need to identify the object we are
 going to edit.
 
 To the recipe-detail template, add a link to a still undefined url
-``recipe-update``::
+``recipe-update``:
+
+.. code-block:: html+django
 
     <p><a href="{% url recipe-update object.slug %}">Edit description</a></p>
 
-The url will contain the slug, like the detail view::
+The url will contain the slug, like the create view::
 
-    url(r'^(?P<slug>[-\w]+)/edit/$', RecipeUpdateView.as_view(), name='recipe-updat e')
+    url(r'^(?P<slug>[-\w]+)/update$', RecipeUpdateView.as_view(), name='recipe-updat e'),
 
 The view will not be very different from before, but you need to remember to
-import UpdateView and then the view itself::
+import ``UpdateView`` and code the view itself::
 
     class RecipeUpdateView(UpdateView):
         model = Recipe
 
 Now this should work without adding another template, as the *recipe_form.html*
-will be used by both the create view and the update view. You will see that the
-template still says "Add recipe". To demonstrate how to use a non-default
-template, copy the recipe_form.html to other_file.html, change it so it to say
-"Change recipe" and set a template_name variable in the view to that
-recipes/other_file.html::
+will be used by both the create view and the update view. When you try to edit
+the description, you will see that the template still says "Add recipe".
+
+Using a non-default template
+----------------------------
+
+You could have chosen other texts that would have fit both a create form and an
+update form, but we want to show how to use a non-default template. Copy the
+*recipe_form.html* to *recipe_update_form.html*, change its contents so it says
+"Change recipe" and set the ``template_name`` variable of the view to point to
+the new template instead of silently pointing to the default::
 
     class RecipeUpdateView(UpdateView):
         model = Recipe
-        template_name = "recipes/other_file.html"
+        template_name = "recipes/recipe_update_form.html"
 
-Oh, ingredients
-===============
+Adding ingredients
+==================
 
-The last thing to do is to combine all of this and add, show and delete ingredients. Start by adding a link to the recipe-list template where your users can click to add ingredients::
+The last thing to do is to combine all of this to add, show and delete
+ingredients. Start by adding a link to the recipe-list template where your
+users can click to add ingredients:
+
+.. code-block:: html+django
 
     <p><a href="{% url ingredient-create object.slug %}">Add ingredient</a></p>
 
-You see that we need we send in the slug of the object so that we do not need our users to choose this from a menu later. This slug is of course also part of the needed url pattern::
+You see that we need to send in the slug of the object so that we do not need
+our users to choose this from a menu later. This slug is of course also part of
+the needed url pattern::
 
     url(r'^(?P<slug>[-\w]+)/add_ingredient/$', IngredientCreateView.as_view(), name='ingredient-create'),
 
