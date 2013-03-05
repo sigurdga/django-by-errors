@@ -627,8 +627,12 @@ In *views.py*, remove the file contents and insert this instead::
     class FoodListView(ListView):
         model = Food
 
-And the urls.py should import the new FoodListView instead of food_list, and
-the pattern should be changed to this::
+And the urls.py should import the new ``FoodListView`` instead of food_list,
+like this::
+
+    from recipes.views import FoodListView
+
+And the pattern should be changed to this::
 
     url(r'^food/$', FoodListView.as_view(), name='food-list'),
 
@@ -638,8 +642,8 @@ Here, instead of calling the view function directly, we are now calling the
 from the ``ListView`` model class of the ``django.views.generic`` module.
 
 Have a look in the browser. The functionality is the same, the code a bit
-shorter. But you should know how to write this yourself as we did in the first
-version of it.
+shorter. You may need the old syntax from time to time, so you should know that
+an old and more flexible syntax exists.
 
 Your second view: Food details
 ==============================
