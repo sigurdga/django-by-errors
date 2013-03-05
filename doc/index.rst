@@ -19,10 +19,10 @@ and tutorials on how to do everything right. But what do you do the first time
 you get an error?
 
 Here, we will be accustomed to as many error messages as possible while
-building a small site.
+building a small app to store recipes.
 
-In this tutorial, you will also learn how to use South for database migrations,
-and Twitter Bootstrap for a nice default site styling.
+In this tutorial, you will also learn how to use *South* for database
+migrations, and *Twitter Bootstrap* for a nice default site styling.
 
 About Django
 ============
@@ -78,27 +78,32 @@ Starting a project
 
 Find a place where you want your project, and create a virtual environment to
 keep your requirements and dependencies separated from the rest of your python
-system. And activate your new virtual environment::
+system::
 
-    virtualenv --no-site-packages env
-    source env/bin/activate
+    $ virtualenv --no-site-packages env
+
+And activate your new virtual environment::
+
+    $ source env/bin/activate
 
 You are now "inside" this virtual environment. You can type "deactivate" to get
-out of it. But be sure to be inside when installing Django::
+out of it. Each time you open a terminal and want to work on a project in a
+virtual environment, you need to activate it using the command above. But be
+sure to be inside when installing Django::
 
-    pip install django
+    $ pip install django
 
 Now that Django is installed you have a new command inside the "bin" folder in env,
 which you can use to start a new Django project. I have named mine
 "recipes-project"::
 
-    ./env/bin/django-admin.py startproject recipes_project
+    $ ./env/bin/django-admin.py startproject recipes_project
 
 Go into the **project folder**, make the ``manage.py`` script runnable and
 start the *built-in webserver*::
 
-    cd recipes_project
-    python manage.py runserver
+    $ cd recipes_project
+    $ python manage.py runserver
 
 Now go to ``localhost:8000`` in your web browser.  You can stop the server by
 pressing ``ctrl-c`` as suggested by the command output.
@@ -107,26 +112,36 @@ pressing ``ctrl-c`` as suggested by the command output.
 
 The page congratulates you, and tells you about your next steps: you should
 update your database settings and create an **app**.  The apps are meant to be
-*reusable* components that you can tie together when building projects.
+*reusable* components that you can tie together when building projects. We will
+do this after a little break.
 
-Have a look around in your project folder. You will see a folder with the same
-name as your project, *recipes_project*. This is where central project configuration
-and common code will live.
+File structure before creating an app
+-------------------------------------
+
+Inside the folder that was created with the ``start-project`` command, you will
+see the ``manage.py`` file and a folder with the same as the project folder
+itself.
 
 Contents of project folder::
 
     $ ls
     manage.py  recipes_project
 
-Contents of configuration folder::
+This subfolder is where project settings and common configuration is stored.
+
+If you list the contents of the subfolder, you will see a special ``__init__``
+file that by being there makes the folder to be a Python *package*, a
+``settings`` file, the toplevel ``url`` routing file, and a ``wsgi`` file for
+running the code by a server. You will need to notice the location of your
+settings.py and the urls.py for later::
 
     $ ls recipes_project
     __init__.py   settings.py   urls.py   wsgi.py
     __init__.pyc  settings.pyc  urls.pyc  wsgi.pyc
 
 The pyc-files are compiled versions of the source files. We do not need to
-bother too much about them, and if you remove them, they get recreated when the
-source file is run.
+bother too much about them, and if you remove them, they will get recreated
+when the source files are run again.
 
 Database setup
 --------------
@@ -134,8 +149,8 @@ Database setup
 The welcoming page told us to setup the database. The database settings are
 part of the *settings.py* file in the configuration folder. Open up
 ``recipes_project/settings.py`` in your favourite text editor, and change the
-database settings: Append ``sqlite3`` to the ``ENGINE`` field and add a database
-name to the NAME field, "database.db" is a good name::
+database settings: Append ``sqlite3`` to the ``ENGINE`` field and add a
+database name to the NAME field, "database.db" is a good name::
 
     DATABASES = {
         'default': {
@@ -173,8 +188,8 @@ And the new *recipes* folder contains this::
 Activating the app
 ------------------
 
-Now, you should enable your new app in the project settings, by appending the
-name of your app to the ``INSTALLED_APPS`` tuple, near the bottom. The section
+Now, you should enable your new app in the ``settings.py``, by adding the name
+of your app to the ``INSTALLED_APPS``, near the bottom of the file. The section
 should look something like::
 
     INSTALLED_APPS = (
@@ -191,7 +206,8 @@ should look something like::
         'recipes',
     )
 
-The extra comma at the end is optional on the last line, but I recommend it.
+The extra comma at the end is optional on the last line, but I recommend it, as
+it makes it easier to add another line later.
 
 Now, to route traffic to the newly created app, we also need to add a line to
 the list of url patterns Django will use to match incoming requests. In the
@@ -200,13 +216,17 @@ project level ``urls.py``, you will see a line like this::
     # url(r'^recipes_project/', include('recipes_project.foo.urls')),
 
 The code with "#" in front is "commented out" and will not run. To make it
-active, remove the "#" and the first space. We will also change the line itself
+active, remove the "#". We will also change the line itself
 so it reads::
 
     url(r'^recipes/', include('recipes.urls')),
 
-It is useful to keep a terminal always running ``python manage.py runserver``, and
-use another terminal window or tab for all the other commands you need to run.
+Every address that starts with "recipes" will now point to a urls file of
+your recipes app, where the actual routes to views will happen.
+
+It is useful to keep a terminal always running ``python manage.py runserver``,
+and use another terminal window or tab for all the other commands you need to
+run. Remember to run the ``activate`` command in your new terminal.
 
 Refresh the browser and see that complains: "No module named urls"
 
@@ -228,9 +248,11 @@ what alternatives you have.
 
 .. image:: page_not_found.png
 
-The page suggests that you should append "recipes/" to the address field of
-your browser.  Go ahead, try it, and see that you get the first "It worked!"
-page again as there were no errors, but also, no contents.
+The page suggests that you should add ``/recipes/`` to the address field of
+your browser.  In the urls.py you have created a rule that sends everything
+starting with ``recipes/`` to the recipes app. Go ahead, add recipes to the
+browser location, and see that you get the first "It worked!" page again as
+there were no errors, but also, no contents.
 
 
 ***************************
@@ -293,16 +315,16 @@ process will stop, telling::
 
     Error: No module named south
 
-You need to install the "south" app::
+You need to install South::
 
-    pip install south
+    $ pip install south
 
 And restart your server.
 
-To create your first migration belonging to the *recipes* app/module, run use
-the *init* subcommand::
+To create your first migration belonging to the *recipes* app/module, use the
+*init* subcommand::
 
-    python manage.py schemamigration recipes --init
+    $ python manage.py schemamigration recipes --init
 
 This will only create the migration, not do anything to the database, as you
 can create more migrations and execute them at the same time. It will also
@@ -314,7 +336,7 @@ To actually run this command, you need to run the management command
 one with migrations defined). To do both *syncdb* and *migrate* at the same
 time, run::
 
-    python manage.py syncdb --migrate
+    $ python manage.py syncdb --migrate
 
 The first time syncdb is run, it will ask you to create a user. We will soon be
 using the built-in admin interface where you later can create users, but to log
@@ -414,15 +436,14 @@ You will now get an error complaining about missing tables. This is because you
 added the admin inteface after the last run of "syncdb", so the tables admin
 needs are not created. Just run the same syncdb command again::
 
-    python manage.py syncdb --migrate
+    $ python manage.py syncdb --migrate
 
 This time, the output also lists "django.contrib.admin" as a synced app.
 
 Adding a method to your model
 -----------------------------
 
-When you have successfully created a few kinds of food, you will see in the
-list that it list a few lines of *Food object*.
+When you have successfully created Apple and Banana, you will see that you have two lines of *Food object*.
 
 .. image:: food_objects.png
 
@@ -436,9 +457,8 @@ Food class (at the same indentation level as the "name"). Make it return
 
 When refreshing the list, your table should look more user friendly. The
 __unicode__ is utilized by Django to write a human readable version of the
-object. Later, for example in templates, you could just print the object
-without saying what parts of the object you want to print, and let the
-__unicode__ for that class decide.
+object. A side effect is that you now have defined a default representation of
+the object, so you do not need to add ``.name`` everywhere.
 
 .. image:: user_friendly_food_objects.png
 
@@ -484,9 +504,9 @@ Bootstrapping a template
 ------------------------
 
 We will make this template in a folder named "templates/recipes" inside the app
-folder. From inside the recipes folder, create the template folders::
+folder::
 
-    mkdir -p templates/recipes
+    $ mkdir -p templates/recipes
 
 And create a file in the newly created folder called ``food_list.html``
 containing (copied from
@@ -513,10 +533,10 @@ This template needs some files from the *Twitter Bootstrap* project, so in your
 app folder, download twitter bootstrap static files, unzip and rename the
 directory to ``static``::
 
-    wget http://twitter.github.com/bootstrap/assets/bootstrap.zip
-    unzip bootstrap.zip
-    rm bootstrap.zip
-    mv bootstrap static
+    $ wget http://twitter.github.com/bootstrap/assets/bootstrap.zip
+    $ unzip bootstrap.zip
+    $ rm bootstrap.zip
+    $ mv bootstrap static
 
 Have a look at the file structure there and compare to the explanations at
 http://twitter.github.com/bootstrap/getting-started.html. It should be alright.
@@ -526,12 +546,15 @@ only picked up at server restart.
 
 Now, refresh the web browser and see the page saying "Hello, world!".
 
-Add a *div* tag with class *container* around the *h1* and see how the page
-changes.
+The real coding begins
+----------------------
 
-Change the template by changing the *h1* tag and the *title*, and after the *h1*
-(but inside the new div), print the contents of the ``object_list`` template
-variable we created above, like this:
+*We will now change the template. You can compare your work to the full example further down the page.*
+
+Add a ``div`` tag with class *container* around the ``h1`` and see how the page
+changes. Change the template by changing the *h1* tag and the *title*, and
+after the *h1* (but inside the div), display the contents of the
+``object_list`` template variable we created above, like this:
 
 .. code-block:: html+django
 
