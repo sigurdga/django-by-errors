@@ -786,7 +786,7 @@ Append ``CreateView`` to the django.views import at the top of *views.py*, and
 create a new view like::
 
     class FoodCreateView(CreateView):
-        model = FoodCreateView
+        model = Food
 
 In the *urls.py*, add the new FoodCreateView to the import at the top, and add a
 new url pattern::
